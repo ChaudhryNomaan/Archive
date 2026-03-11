@@ -15,7 +15,6 @@ export default function CheckoutPage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Dynamic Bank Details State
   const [bankInfo, setBankInfo] = useState({
     bankName: '',
     accountName: '',
@@ -23,14 +22,13 @@ export default function CheckoutPage() {
     swift: '',
     reference: '',
     adminEmail: '',
-    instagramHandle: 'velos_archive' // Default fallback
+    instagramHandle: 'velos_archive' 
   });
 
   useEffect(() => {
     setHasMounted(true);
     document.body.classList.add('checkout-page-body');
 
-    // Fetch Vault Configuration from Supabase
     const fetchVaultConfig = async () => {
       try {
         const { data, error } = await supabase
@@ -56,7 +54,6 @@ export default function CheckoutPage() {
     };
 
     fetchVaultConfig();
-
     return () => document.body.classList.remove('checkout-page-body');
   }, [supabase]);
 
@@ -73,53 +70,40 @@ export default function CheckoutPage() {
   };
 
   const handleConfirm = async () => {
-    if (!receiptFile || !formRef.current) return;
+    if (!receiptFile) return;
     
     setIsProcessing(true);
 
-    const inputs = formRef.current.querySelectorAll('input');
-    const customerData: any = {};
-    inputs.forEach(input => {
-        if(input.placeholder) customerData[input.placeholder.toLowerCase()] = input.value;
-    });
+    // 1. Construct the Order Summary for Clipboard
+    const itemSummary = bag.map((item: any) => 
+      `- ${item.name.toUpperCase()} (${item.selectedSize || "N/A"})`
+    ).join('\n');
 
-    const formData = new FormData();
-    formData.append('file', receiptFile);
-    formData.append('orderData', JSON.stringify({
-      adminEmail: bankInfo.adminEmail,
-      items: bag.map((item: any) => ({
-        name: item.name,
-        price: item.price,
-        size: item.selectedSize || "N/A",
-        sku: item.sku || "NO-SKU"
-      })),
-      total: bagTotal,
-      customer: {
-        name: customerData['full name'],
-        email: customerData['email address'],
-        address: customerData['street address'],
-        city: customerData['city'],
-        postal: customerData['postal code']
-      },
-      paymentReference: bankInfo.reference
-    }));
+    const orderSummary = `
+NEW ARCHIVE REQUEST
+--------------------
+REF: ${bankInfo.reference}
+TOTAL: €${bagTotal.toFixed(2)}
+
+ITEMS:
+${itemSummary}
+
+*Receipt Attached*
+    `.trim();
 
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (res.ok) {
-        setOrderComplete(true);
-        clearBag();
-      } else {
-        const errData = await res.json();
-        alert(`TRANSACTION ERROR // ${errData.error || 'PLEASE TRY AGAIN'}`);
-      }
+      // 2. Copy details to clipboard
+      await navigator.clipboard.writeText(orderSummary);
+      
+      // 3. UI Transition
+      setOrderComplete(true);
+      clearBag();
+      
+      alert("ORDER DETAILS COPIED. PLEASE PASTE IN DM.");
     } catch (error) {
-      console.error("Checkout failed:", error);
-      alert("NETWORK ERROR // CHECK CONNECTION");
+      console.error("Clipboard failed:", error);
+      setOrderComplete(true);
+      clearBag();
     } finally {
       setIsProcessing(false);
     }
@@ -133,7 +117,7 @@ export default function CheckoutPage() {
             
             <div className="bank-details-box" style={{ textAlign: 'left', marginBottom: '40px' }}>
               <p style={{ fontSize: '9px', color: '#555', letterSpacing: '2px', lineHeight: '1.8', marginBottom: '20px' }}>
-                TRANSACTION INITIALIZED. TO COMPLETE ARCHIVE ACQUISITION, SEND YOUR UNIQUE REFERENCE TO OUR CONCIERGE VIA INSTAGRAM DM.
+                TRANSACTION INITIALIZED. ORDER DETAILS ARE COPIED TO YOUR CLIPBOARD. SEND THEM ALONG WITH YOUR RECEIPT TO OUR CONCIERGE.
               </p>
               
               <div style={{ border: '1px solid #222', padding: '20px', textAlign: 'center' }}>

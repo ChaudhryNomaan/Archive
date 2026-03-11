@@ -13,7 +13,7 @@ export default function AdminSettings() {
     accountName: '',
     iban: '',
     swift: '',
-    instagram: 'velos_archive' // Added for redirection logic
+    instagram: 'velos_archive' // Standardized key
   });
 
   useEffect(() => {
@@ -25,7 +25,11 @@ export default function AdminSettings() {
         .single();
 
       if (data && !error) {
-        setSettings(data.content);
+        // Ensure that if 'instagram' is missing in old data, it defaults
+        setSettings({
+          ...data.content,
+          instagram: data.content.instagram || 'velos_archive'
+        });
       }
     };
     fetchVaultData();
@@ -77,8 +81,8 @@ export default function AdminSettings() {
           
           <div className="input-group full-width">
             <div className="label-wrapper">
-              <label>SYSTEM NOTIFICATION GATEWAY</label>
-              <span className="label-detail">ENCRYPTED ENDPOINT</span>
+              <label>CONTACT EMAIL</label>
+              <span className="label-detail">PUBLIC DISPLAY ONLY</span>
             </div>
             <input 
               type="email" 
@@ -146,7 +150,7 @@ export default function AdminSettings() {
           <div className="input-group full-width">
             <div className="label-wrapper">
               <label>INSTAGRAM CONCIERGE HANDLE</label>
-              <span className="label-detail">DM GATEWAY</span>
+              <span className="label-detail">DM GATEWAY PROTOCOL</span>
             </div>
             <input 
               type="text" 
