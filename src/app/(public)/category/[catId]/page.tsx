@@ -4,9 +4,6 @@ import Link from 'next/link';
 import { CAT_MAP } from '@/lib/constants';
 import Media from '@/components/Media';
 import { createClient } from '@/lib/supabase';
-import { useVelos } from '@/context/VelosContext'; 
-
-const supabase = createClient();
 
 export default function CategoryPage({ params }: { params: Promise<{ catId: string }> }) {
   const { catId } = use(params);
@@ -34,9 +31,7 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
         const { data, error } = await supabase
           .from('products')
           .select('*')
-          .eq('category', catId)
-          .eq('city_id', selectedCity) // SYNCED: Uses city_id from Admin
-          .order('created_at', { ascending: false });
+          .eq('category', catId);
 
         if (error) throw error;
         setVaultData(data || []);
@@ -49,7 +44,7 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
     };
 
     fetchVault();
-  }, [catId, selectedCity]); 
+  }, [catId]);
 
   const items = useMemo(() => {
     if (!Array.isArray(vaultData)) return [];

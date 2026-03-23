@@ -16,10 +16,6 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const touchStart = useRef<number | null>(null);
-  const touchEnd = useRef<number | null>(null);
-  const minSwipeDistance = 50;
-
   useEffect(() => {
     const fetchProduct = async () => {
       if (!prodId || !selectedCity) return;
@@ -79,27 +75,8 @@ export default function ProductPage() {
     return url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes('video');
   };
 
+  // Navigation Logic
   const nextImage = () => setActiveIndex((prev) => (prev + 1) % mediaItems.length);
-  const prevImage = () => setActiveIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchEnd.current = null;
-    touchStart.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    touchEnd.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart.current || !touchEnd.current) return;
-    const distance = touchStart.current - touchEnd.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) nextImage();
-    if (isRightSwipe) prevImage();
-  };
 
   const availableSizes = product.specifications?.size 
     ? product.specifications.size.split(',').map((s: string) => s.trim()).filter(Boolean)
@@ -125,7 +102,6 @@ export default function ProductPage() {
           align-items: center;
           justify-content: center;
           cursor: w-resize;
-          touch-action: pan-y; 
         }
 
         .pd-gallery-container {
