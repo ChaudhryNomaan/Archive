@@ -1,16 +1,38 @@
 "use client";
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 const VelosContext = createContext<any>(null);
 
 export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
-  // Renamed 'cart' to 'bag' to match your Checkout logic
   const [bag, setBag] = useState<any[]>([]);
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // New State: selectedCity (Defaults to null until user picks via City Gate)
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+
+  // Sync city with localStorage so the "Archive" preference persists
+  useEffect(() => {
+    const savedCity = localStorage.getItem('velos_selected_city');
+    if (savedCity) {
+      setSelectedCity(savedCity);
+    }
+  }, []);
+
+  // UPDATED: handleSetCity now handles both selecting and clearing (Relocating)
+  const handleSetCity = (city: string | null) => {
+    setSelectedCity(city);
+    
+    if (city) {
+      // Save to storage if a city is picked
+      localStorage.setItem('velos_selected_city', city);
+    } else {
+      // Remove from storage if relocating (city is null)
+      localStorage.removeItem('velos_selected_city');
+    }
+  };
 
   const addToBag = (item: any) => {
-    // Generate a unique ID to allow multiple instances of the same product
     const uniqueItem = { 
       ...item, 
       cartId: `${item.id}-${Date.now()}-${Math.random()}` 
@@ -25,7 +47,6 @@ export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearBag = () => setBag([]);
 
-  // Memoize total to prevent unnecessary recalculations
   const bagTotal = useMemo(() => {
     return bag.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
   }, [bag]);
@@ -35,13 +56,16 @@ export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
       value={{ 
         isMenuOpen, 
         setIsMenuOpen, 
-        bag,          // Now matches your checkout page logic
-        bagTotal,     // Pre-calculated total
+        bag,
+        bagTotal,
         addToBag, 
         removeFromBag, 
         clearBag,
         isBagOpen, 
-        setIsBagOpen 
+        setIsBagOpen,
+        // City Gate Values
+        selectedCity,
+        setSelectedCity: handleSetCity 
       }}
     >
       {children}

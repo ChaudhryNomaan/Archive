@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase';
 export default function ProductPage() {
   const { prodId } = useParams(); 
   const router = useRouter();
-  const { addToBag } = useVelos();
+  const { addToBag, selectedCity } = useVelos(); 
   const supabase = createClient(); 
   
   const [product, setProduct] = useState<any>(null);
@@ -16,19 +16,21 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Swipe logic refs
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
   const minSwipeDistance = 50;
 
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!prodId || !selectedCity) return;
+
       try {
         setLoading(true);
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('slug', prodId)
+          .eq('city_id', selectedCity) // Updated to match city_id column from your schema
           .single();
 
         if (error) throw error;
@@ -38,29 +40,35 @@ export default function ProductPage() {
           const sizeString = data.specifications?.size || "";
           const sizeArray = sizeString.split(',').map((s: string) => s.trim()).filter(Boolean);
           if (sizeArray.length > 0) setSelectedSize(sizeArray[0]);
+        } else {
+          setProduct(null);
         }
       } catch (error) {
         console.error("Supabase fetch error:", error);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
 
-    if (prodId) fetchProduct();
-  }, [prodId, supabase]);
+    fetchProduct();
+  }, [prodId, supabase, selectedCity]); 
 
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
-        <p className="sku" style={{ letterSpacing: '5px', color: '#000' }}>SYNCHRONIZING...</p>
+        <p className="sku" style={{ letterSpacing: '5px', color: '#000' }}>
+          SYNCHRONIZING_{selectedCity?.toUpperCase()}...
+        </p>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <p className="sku" style={{ color: '#000' }}>404 // PRODUCT NOT FOUND</p>
+      <div className="h-screen flex items-center justify-center bg-white flex-col gap-4">
+        <p className="sku" style={{ color: '#000' }}>404 // PRODUCT NOT FOUND IN {selectedCity?.toUpperCase()}</p>
+        <button onClick={() => router.push('/')} className="text-[10px] tracking-[2px] border-b border-black uppercase">Return to Archive</button>
       </div>
     );
   }
@@ -71,11 +79,9 @@ export default function ProductPage() {
     return url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes('video');
   };
 
-  // Navigation Logic
   const nextImage = () => setActiveIndex((prev) => (prev + 1) % mediaItems.length);
   const prevImage = () => setActiveIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
 
-  // Swipe Handlers
   const onTouchStart = (e: React.TouchEvent) => {
     touchEnd.current = null;
     touchStart.current = e.targetTouches[0].clientX;
@@ -119,7 +125,7 @@ export default function ProductPage() {
           align-items: center;
           justify-content: center;
           cursor: w-resize;
-          touch-action: pan-y; /* Allows vertical scrolling but captures horizontal swipes */
+          touch-action: pan-y; 
         }
 
         .pd-gallery-container {
@@ -319,8 +325,8 @@ export default function ProductPage() {
               <span style={{ fontSize: '11px', fontWeight: 800 }}>{product.availability || "IN STOCK"}</span>
             </div>
             <div className="info-cell" style={{ background: '#fff', padding: '25px' }}>
-              <span style={{ fontSize: '9px', fontWeight: 900, color: '#bbb', letterSpacing: '1.5px', display: 'block' }}>SHIPPING</span>
-              <span style={{ fontSize: '11px', fontWeight: 800 }}>{product.shipping_info || "2-4 DAYS"}</span>
+              <span style={{ fontSize: '9px', fontWeight: 900, color: '#bbb', letterSpacing: '1.5px', display: 'block' }}>LOCATION</span>
+              <span style={{ fontSize: '11px', fontWeight: 800 }}>{selectedCity?.toUpperCase()}</span>
             </div>
           </div>
         </div>

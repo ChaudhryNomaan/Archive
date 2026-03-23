@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { CAT_MAP } from '@/lib/constants';
 import Media from '@/components/Media';
 import { createClient } from '@/lib/supabase';
+import { useVelos } from '@/context/VelosContext'; 
 
-// Move client initialization outside to keep the reference stable
 const supabase = createClient();
 
 export default function CategoryPage({ params }: { params: Promise<{ catId: string }> }) {
   const { catId } = use(params);
+  const { selectedCity } = useVelos(); 
   const [activeSub, setActiveSub] = useState("");
   const [vaultData, setVaultData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,18 +24,24 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
     }
 
     const fetchVault = async () => {
+      if (!selectedCity) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('category', catId)
-          .order('created_at', { ascending: false }); // Added ordering to show newest first
+          .eq('city_id', selectedCity) // SYNCED: Uses city_id from Admin
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
         setVaultData(data || []);
-      } catch (error) {
-        console.error("Failed to load vault:", error);
+      } catch (error: any) {
+        console.error("Failed to load vault:", error.message || error);
         setVaultData([]);
       } finally {
         setIsLoading(false);
@@ -42,23 +49,27 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
     };
 
     fetchVault();
-  }, [catId]); 
+  }, [catId, selectedCity]); 
 
   const items = useMemo(() => {
     if (!Array.isArray(vaultData)) return [];
     return vaultData.filter(i => {
       const itemSub = i.sub_category || i.subcategory || "";
       return i.category === catId && 
+             i.city_id === selectedCity && // SYNCED: Uses city_id
              String(itemSub).toLowerCase() === String(activeSub).toLowerCase();
     });
-  }, [catId, activeSub, vaultData]);
+  }, [catId, activeSub, vaultData, selectedCity]);
 
   if (!mounted) return <div className="cat-root" />;
 
   return (
     <div className="cat-root">
       <aside className="cat-sidebar">
-        <span className="cat-breadcrumb">ARCHIVE {" // "} {catId}</span>
+        <span className="cat-breadcrumb">
+          ARCHIVE {" // "} {selectedCity?.toUpperCase() || "SELECT_CITY"} {" // "} {catId}
+        </span>
+        
         <nav className="cat-nav-list">
           {CAT_MAP[catId]?.map(sub => (
             <button 
@@ -76,13 +87,12 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
       <div className="cat-grid">
         {isLoading ? (
           <div className="loading-state" style={{ padding: '20px', fontSize: '10px', letterSpacing: '2px', color: '#444' }}>
-            SYNCHRONIZING_ARCHIVE...
+            SYNCHRONIZING_{selectedCity?.toUpperCase()}_ARCHIVE...
           </div>
         ) : items.length > 0 ? (
           items.map((item, idx) => {
             const currentPrice = item.price || item.itemPrice;
             
-            // AGGRESSIVE URL DETECTION
             let finalUrl = "";
             try {
               if (typeof item.image_url === 'string') {
@@ -135,7 +145,7 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
           })
         ) : (
           <div className="empty-state" style={{ padding: '20px', fontSize: '10px', color: '#444', letterSpacing: '1px' }}>
-            NO_DATA_FOUND // SECTOR_{catId?.toUpperCase()}_{activeSub?.toUpperCase()}
+            NO_DATA_FOUND // {selectedCity?.toUpperCase()} // SECTOR_{catId?.toUpperCase()}
           </div>
         )}
       </div>
