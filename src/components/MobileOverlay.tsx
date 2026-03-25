@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useVelos } from '@/context/VelosContext';
+import { useOSNOVA } from '../context/OSNOVAContext';
 import { createClient } from '@/lib/supabase';
 
 // SYNC: Match these to your Nav.tsx sectors
@@ -9,12 +9,12 @@ const NAV_SECTORS = ["JEANS/PANTS", "T-SHIRTS", "JACKETS", "SHIRTS"];
 
 export default function MobileOverlay() {
   const supabase = createClient();
-  const { isMenuOpen, setIsMenuOpen } = useVelos();
+  const { isMenuOpen, setIsMenuOpen } = useOSNOVA();
   
   const [menuSettings, setMenuSettings] = useState({
     menuLabel: 'MENU',
     menuVideo: '/images/hero-section.mp4',
-    project: 'VELOS ARCHIVE © 2026',
+    project: 'OSNOVA ARCHIVE © 2026',
     instagram: '#',
     twitter: '#'
   });
@@ -34,7 +34,7 @@ export default function MobileOverlay() {
           setMenuSettings({
             menuLabel: data.content.menuLabel || 'MENU',
             menuVideo: data.content.menuVideo || '/images/hero-section.mp4',
-            project: data.content.project || 'VELOS ARCHIVE © 2026',
+            project: data.content.project || 'OSNOVA ARCHIVE © 2026',
             instagram: data.content.instagram || '#',
             twitter: data.content.twitter || '#'
           });

@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import { useVelos } from '@/context/VelosContext';
+import { useOSNOVA } from '@/context/OSNOVAContext';
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
   const supabase = createClient();
-  const { bag, bagTotal, clearBag } = useVelos();
+  const { bag, bagTotal, clearBag } = useOSNOVA();
   const [hasMounted, setHasMounted] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,7 +22,7 @@ export default function CheckoutPage() {
     swift: '',
     reference: '',
     adminEmail: '',
-    instagramHandle: 'velos_archive' 
+    instagramHandle: 'OSNOVA_archive' 
   });
 
   useEffect(() => {
@@ -43,9 +43,9 @@ export default function CheckoutPage() {
             accountName: data.content.accountName || '[ AWAITING_PROTOCOL ]',
             iban: data.content.iban || '[ AWAITING_PROTOCOL ]',
             swift: data.content.swift || '[ AWAITING_PROTOCOL ]',
-            adminEmail: data.content.email || 'admin@velos-archive.com',
-            instagramHandle: data.content.instagram || 'velos_archive',
-            reference: `VELOS_ARC_${Math.floor(1000 + Math.random() * 9000)}`
+            adminEmail: data.content.email || 'admin@OSNOVA-archive.com',
+            instagramHandle: data.content.instagram || 'OSNOVA_archive',
+            reference: `OSNOVA_ARC_${Math.floor(1000 + Math.random() * 9000)}`
           });
         }
       } catch (err) {

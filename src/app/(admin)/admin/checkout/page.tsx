@@ -8,12 +8,12 @@ export default function AdminSettings() {
   const [status, setStatus] = useState('');
 
   const [settings, setSettings] = useState({
-    email: 'admin@velos-archive.com',
+    email: 'admin@OSNOVA-archive.com',
     bankName: '',
     accountName: '',
     iban: '',
     swift: '',
-    instagram: 'velos_archive' // Standardized key
+    instagram: 'OSNOVA_archive' // Standardized key
   });
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function AdminSettings() {
         // Ensure that if 'instagram' is missing in old data, it defaults
         setSettings({
           ...data.content,
-          instagram: data.content.instagram || 'velos_archive'
+          instagram: data.content.instagram || 'OSNOVA_archive'
         });
       }
     };
@@ -87,7 +87,7 @@ export default function AdminSettings() {
             <input 
               type="email" 
               className="luxury-input" 
-              placeholder="admin@velos-archive.com"
+              placeholder="admin@OSNOVA-archive.com"
               value={settings.email || ''}
               onChange={(e) => handleInputChange('email', e.target.value)}
             />
@@ -114,7 +114,7 @@ export default function AdminSettings() {
             <input 
               type="text" 
               className="luxury-input serif-italic" 
-              placeholder="VELOS ARCHIVE HOLDINGS"
+              placeholder="OSNOVA ARCHIVE HOLDINGS"
               value={settings.accountName || ''}
               onChange={(e) => handleInputChange('accountName', e.target.value)}
             />
@@ -155,7 +155,7 @@ export default function AdminSettings() {
             <input 
               type="text" 
               className="luxury-input" 
-              placeholder="velos_archive"
+              placeholder="OSNOVA_archive"
               value={settings.instagram || ''}
               onChange={(e) => handleInputChange('instagram', e.target.value)}
             />

@@ -8,7 +8,7 @@ export default function IdentityAdmin() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    logoText: 'VELOS',
+    logoText: 'OSNOVA',
     bagLabel: 'BAG',
     menuLabel: 'MENU',
     menuVideo: ''

@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useVelos } from '@/context/VelosContext';
+import { useOSNOVA } from '../context/OSNOVAContext';
 import Media from './Media';
 
 // 1. Added Interface to define the 'item' type and stop the red line/Vercel errors
@@ -22,7 +22,7 @@ interface BagItem {
 }
 
 export default function ShoppingBag() {
-  const { bag, isBagOpen, setIsBagOpen, removeFromBag, bagTotal } = useVelos();
+  const { bag, isBagOpen, setIsBagOpen, removeFromBag, bagTotal } = useOSNOVA();
   const router = useRouter();
 
   if (!isBagOpen) return null;

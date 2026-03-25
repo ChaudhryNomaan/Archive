@@ -48,8 +48,89 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
   const categoryTitle = decodeURIComponent(catId || "").toUpperCase().replace('-', ' / ');
 
   return (
-    // min-h-[100vh] prevents the footer from jumping up
     <div className="cat-root min-h-screen">
+      <style jsx>{`
+        .cat-root {
+          padding-top: 80px; /* Adjust based on your header height */
+        }
+        .cat-sidebar {
+          padding: 40px 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .cat-breadcrumb {
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+        }
+        .cat-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1px;
+          background: #eee; /* Grid line effect */
+          border-bottom: 1px solid #eee;
+        }
+        .cat-card {
+          background: #fff;
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          color: inherit;
+        }
+        .cc-media {
+          aspect-ratio: 4 / 5;
+          width: 100%;
+          overflow: hidden;
+          background: #f9f9f9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cc-media img, .cc-media video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .cc-info {
+          padding: 20px;
+        }
+        .sku {
+          font-size: 9px;
+          color: #aaa;
+          font-weight: 800;
+          letter-spacing: 1px;
+          display: block;
+          margin-bottom: 5px;
+        }
+        h4 {
+          font-size: 14px;
+          font-weight: 900;
+          margin: 0;
+          text-transform: uppercase;
+        }
+        .price-tag {
+          font-size: 13px;
+          margin-top: 5px;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 1024px) {
+          .cat-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        @media (max-width: 640px) {
+          .cat-grid {
+            grid-template-columns: 1fr;
+          }
+          .cat-sidebar {
+            padding: 30px 15px;
+          }
+          .cc-info {
+            padding: 15px;
+          }
+        }
+      `}</style>
       
       <div className="cat-sidebar">
         <span className="cat-breadcrumb stagger-in">{categoryTitle}</span>
@@ -57,7 +138,6 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
 
       <div className="cat-grid">
         {loading ? (
-          // SKELETON STATE: 6 Empty cards to hold the space during fetch
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="cat-card animate-pulse">
               <div className="cc-media bg-gray-100" />
@@ -95,7 +175,7 @@ export default function CategoryPage({ params }: { params: Promise<{ catId: stri
       </div>
 
       {hasFetched && !loading && products.length === 0 && (
-        <div className="w-full text-center py-60 text-[10px] tracking-[6px] font-black text-gray-400 uppercase">
+        <div className="w-full text-center py-60 text-[10px] tracking-[6px] font-black text-gray-400 uppercase px-4">
           Archive Empty for {categoryTitle}
         </div>
       )}

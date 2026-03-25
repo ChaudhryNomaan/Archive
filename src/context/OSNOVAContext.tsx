@@ -1,9 +1,9 @@
 "use client";
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-const VelosContext = createContext<any>(null);
+const OSNOVAContext = createContext<any>(null);
 
-export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
+export const OSNOVAProvider = ({ children }: { children: React.ReactNode }) => {
   const [bag, setBag] = useState<any[]>([]);
   const [isBagOpen, setIsBagOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,7 +28,7 @@ export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
   }, [bag]);
 
   return (
-    <VelosContext.Provider 
+    <OSNOVAContext.Provider 
       value={{ 
         isMenuOpen, 
         setIsMenuOpen, 
@@ -42,14 +42,14 @@ export const VelosProvider = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       {children}
-    </VelosContext.Provider>
+    </OSNOVAContext.Provider>
   );
 };
 
-export const useVelos = () => {
-  const context = useContext(VelosContext);
+export const useOSNOVA = () => {
+  const context = useContext(OSNOVAContext);
   if (!context) {
-    throw new Error("useVelos must be used within a VelosProvider");
+    throw new Error("useOSNOVA must be used within a OSNOVAProvider");
   }
   return context;
 };

@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useVelos } from '@/context/VelosContext';
+import { useOSNOVA } from '@/context/OSNOVAContext';
 import { createClient } from '@/lib/supabase';
+
+const supabase = createClient();
 
 export default function ProductPage() {
   const { prodId } = useParams(); 
   const router = useRouter();
-  const { addToBag } = useVelos(); 
-  const supabase = createClient(); 
+  const { addToBag } = useOSNOVA(); 
   
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ export default function ProductPage() {
           setProduct(null);
         }
       } catch (error: any) {
-        console.error("Supabase fetch error:", error.message || error, error.details || "");
+        console.error("Supabase fetch error:", error.message || error);
         setProduct(null);
       } finally {
         setLoading(false);
@@ -90,7 +91,7 @@ export default function ProductPage() {
     : [];
 
   return (
-    <div className="pd-root min-h-screen">
+    <div className="pd-root">
       <style jsx>{`
         .pd-root { 
           display: flex; 
@@ -108,7 +109,6 @@ export default function ProductPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: w-resize;
           height: calc(100vh - 100px);
           overflow: hidden;
         }
@@ -152,12 +152,12 @@ export default function ProductPage() {
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          gap: 20px;
+          gap: 15px;
           z-index: 10;
         }
 
         .control-dot {
-          width: 40px;
+          width: 30px;
           height: 2px;
           background: #000;
           opacity: 0.1;
@@ -171,37 +171,26 @@ export default function ProductPage() {
           flex: 0 0 500px; 
           background: #fff;
           border-left: 1px solid #eee;
-          min-height: calc(100vh - 100px);
         }
 
         .pd-sticky-wrap { 
-          padding: 60px 50px 120px 50px;
+          padding: 60px 50px;
           display: flex; 
           flex-direction: column; 
           gap: 40px; 
         }
         
         .pd-back-link { 
-          background: none; 
-          border: none; 
-          font-weight: 900; 
-          font-size: 10px; 
-          letter-spacing: 2px; 
-          text-align: left; 
-          opacity: 0.4; 
-          transition: 0.3s; 
-          margin-bottom: -20px; 
-          cursor: pointer;
-          width: fit-content;
+          background: none; border: none; font-weight: 900; font-size: 10px; 
+          letter-spacing: 2px; opacity: 0.4; transition: 0.3s; cursor: pointer;
           text-transform: uppercase;
         }
         .pd-back-link:hover { opacity: 1; transform: translateX(-5px); }
 
-        .pd-top h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 900; letter-spacing: -2px; margin: 20px 0; line-height: 1.1; text-transform: uppercase; }
+        .pd-top h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 900; letter-spacing: -2px; line-height: 1.1; text-transform: uppercase; margin: 15px 0; }
         .pd-sku { font-size: 10px; color: #aaa; font-weight: 800; letter-spacing: 1.5px; }
         .pd-price { font-size: 20px; font-weight: 500; }
 
-        .pd-cta-block { display: flex; flex-direction: column; gap: 10px; }
         .pd-add-btn { width: 100%; background: #000; color: #fff; border: 1px solid #000; padding: 24px; font-weight: 900; font-size: 11px; letter-spacing: 3px; cursor: pointer; transition: 0.4s; text-transform: uppercase; }
         .pd-add-btn:hover { background: #333; }
         
@@ -222,14 +211,30 @@ export default function ProductPage() {
           100% { background-position: 468px 0; }
         }
 
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .animate-pulse { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-
+        /* RESPONSIVE OVERRIDES */
         @media (max-width: 1024px) {
-          .pd-root { flex-direction: column; height: auto; padding-top: 80px; }
-          .pd-visual { height: 70vh; width: 100%; position: relative; top: 0; }
-          .pd-sidebar { width: 100%; border-left: none; }
-          .pd-sticky-wrap { padding: 40px 30px; }
+          .pd-root { flex-direction: column; padding-top: 80px; }
+          .pd-visual { 
+            position: relative; 
+            top: 0; 
+            height: 65vh; /* Enough height to show product but keep sidebar visible below */
+            flex: none;
+            width: 100%;
+          }
+          .pd-sidebar { 
+            flex: none; 
+            width: 100%; 
+            border-left: none; 
+            border-top: 1px solid #eee; 
+          }
+          .pd-gallery-item { padding: 30px; }
+          .pd-sticky-wrap { padding: 40px 20px 80px 20px; }
+        }
+
+        @media (max-width: 640px) {
+          .pd-visual { height: 55vh; }
+          .pd-top h1 { font-size: 28px; }
+          .pd-add-btn { padding: 20px; }
         }
       `}</style>
 
@@ -276,7 +281,7 @@ export default function ProductPage() {
             )}
           </>
         ) : (
-          <p className="sku" style={{ color: '#000', fontWeight: 900 }}>404 // NOT FOUND</p>
+          <p className="pd-sku" style={{ color: '#000', fontWeight: 900 }}>404 // NOT FOUND</p>
         )}
       </div>
 
@@ -290,7 +295,6 @@ export default function ProductPage() {
               <div className="h-4 w-24 skeleton-shimmer" />
               <div className="h-16 w-full skeleton-shimmer" />
               <div className="h-8 w-32 skeleton-shimmer" />
-              <div className="h-48 w-full skeleton-shimmer mt-10" />
             </div>
           ) : product ? (
             <>
@@ -317,7 +321,7 @@ export default function ProductPage() {
                 </div>
               )}
               
-              <div className="pd-cta-block">
+              <div className="flex flex-col gap-[10px]">
                 <button 
                   className="pd-add-btn" 
                   onClick={() => addToBag({ ...product, media: product.image_url, selectedSize })}
@@ -338,7 +342,7 @@ export default function ProductPage() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#eee', border: '1px solid #eee' }}>
-                <div className="info-cell" style={{ background: '#fff', padding: '25px' }}>
+                <div style={{ background: '#fff', padding: '25px' }}>
                   <span style={{ fontSize: '9px', fontWeight: 900, color: '#bbb', letterSpacing: '1.5px', display: 'block', textTransform: 'uppercase' }}>Availability</span>
                   <span style={{ fontSize: '11px', fontWeight: 800 }}>{product.availability || "IN STOCK"}</span>
                 </div>
@@ -346,8 +350,8 @@ export default function ProductPage() {
             </>
           ) : (
             <div className="flex flex-col gap-4">
-               <p className="sku" style={{ color: '#000', fontWeight: 900 }}>404 // PRODUCT NOT FOUND</p>
-               <button onClick={() => router.push('/')} className="text-[10px] tracking-[2px] border-b border-black uppercase font-bold w-fit">Return to Archive</button>
+                <p className="pd-sku" style={{ color: '#000', fontWeight: 900 }}>404 // PRODUCT NOT FOUND</p>
+                <button onClick={() => router.push('/')} className="text-[10px] tracking-[2px] border-b border-black uppercase font-bold w-fit">Return to Archive</button>
             </div>
           )}
         </div>

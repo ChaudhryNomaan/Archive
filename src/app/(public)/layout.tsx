@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { VelosProvider } from "@/context/VelosContext";
+import { OSNOVAProvider } from "@/context/OSNOVAContext";
 import Nav from "@/components/Nav";
 import ShoppingBag from "@/components/ShoppingBag";
 import MobileOverlay from "@/components/MobileOverlay";
@@ -20,7 +20,7 @@ export default function PublicLayout({
   const isAdmin = pathname?.startsWith('/admin');
 
   return (
-    <VelosProvider>
+    <OSNOVAProvider>
       {!isAdmin && (
         <>
           <MinimalCursor />
@@ -36,6 +36,6 @@ export default function PublicLayout({
       </main>
 
       {!isAdmin && <Footer />}
-    </VelosProvider>
+    </OSNOVAProvider>
   );
 }

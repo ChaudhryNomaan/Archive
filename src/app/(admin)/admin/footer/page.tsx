@@ -43,7 +43,7 @@ export default function FooterSettings() {
         }, { onConflict: 'section_name' });
 
       if (!error) {
-        alert("SUCCESS: VELOS ARCHIVE UPDATED.");
+        alert("SUCCESS: OSNOVA ARCHIVE UPDATED.");
         router.refresh(); 
       } else {
         throw error;

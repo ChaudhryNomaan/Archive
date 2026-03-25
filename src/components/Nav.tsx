@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useVelos } from '@/context/VelosContext';
+import { useOSNOVA } from '../context/OSNOVAContext';
 import { createClient } from '@/lib/supabase';
 
 // These labels match your logic
@@ -15,11 +15,11 @@ export default function Nav() {
     setIsMenuOpen, 
     bag, 
     setIsBagOpen 
-  } = useVelos();
+  } = useOSNOVA();
   
   const [scrollProgress, setScrollProgress] = useState(0);
   const [branding, setBranding] = useState({
-    logoText: 'VELOS',
+    logoText: '',
     bagLabel: 'BAG'
   });
 
@@ -36,7 +36,7 @@ export default function Nav() {
 
         if (data?.content) {
           setBranding({
-            logoText: data.content.logoText || 'VELOS',
+            logoText: data.content.logoText || 'OSNOVA',
             bagLabel: data.content.bagLabel || 'BAG'
           });
         }

@@ -9,7 +9,7 @@ export default function Footer() {
   // Default values to show if database fetch fails or is empty
   const [data, setData] = useState({
     location: 'LONDON, UK',
-    project: 'VELOS ARCHIVE © 2026',
+    project: 'OSNOVA ARCHIVE © 2026',
     instagram: 'instagram.com',
     twitter: 'twitter.com'
   });

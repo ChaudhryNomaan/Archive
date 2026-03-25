@@ -1,24 +1,21 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 
+const supabase = createClient();
+
 export default function Home() {
-  const supabase = createClient();
   const [hasMounted, setHasMounted] = useState(false);
   
-  // Default configuration: Clean, city-agnostic branding
   const [config, setConfig] = useState<any>({
     hero: {
-      title: 'VELOS ARCHIVE',
-      subtitle: 'MODULAR DESIGN SYSTEM',
+      title: '',
+      subtitle: '',
       videoSrc: '',
-      buttonText: 'EXPLORE THE LAB',
-      buttonLink: '/category/LAB'
     },
     marquee: {
-      text: 'VELOS LAB SERIES — 2026 EDITION — MODULARITY — '
+      text: 'OSNOVA LAB SERIES — 2026 EDITION — MODULARITY — '
     }
   });
 
@@ -47,9 +44,8 @@ export default function Home() {
     };
 
     fetchHeroConfig();
-  }, [supabase]);
+  }, []);
 
-  // Prevents flash of unstyled content or hydration errors
   if (!hasMounted) {
     return <div className="home-container bg-black min-h-screen" />;
   }
@@ -65,7 +61,7 @@ export default function Home() {
             muted 
             playsInline 
             className="h-hero-img"
-            key={config.hero.videoSrc} // Ensures video reloads if the source changes
+            key={config.hero.videoSrc}
           />
         )}
         
@@ -73,7 +69,7 @@ export default function Home() {
           <h1 
             className="reveal-text" 
             dangerouslySetInnerHTML={{ 
-              __html: config.hero?.title?.replace(/\n/g, '<br/>') || "VELOS ARCHIVE" 
+              __html: config.hero?.title?.replace(/\n/g, '<br/>') || "" 
             }} 
           />
           
@@ -81,13 +77,7 @@ export default function Home() {
             {config.hero?.subtitle}
           </p>
           
-          <Link 
-            href={config.hero?.buttonLink || "/category/LAB"} 
-            className="h-btn stagger-in" 
-            style={{ animationDelay: '0.6s' }}
-          >
-            {config.hero?.buttonText || "EXPLORE THE LAB"}
-          </Link>
+          {/* Button removed from here */}
         </div>
       </section>
 
@@ -95,7 +85,7 @@ export default function Home() {
         <div className="m-track">
           {[1, 2, 3, 4].map(i => (
             <span key={i}>
-              {config.marquee?.text || "VELOS LAB SERIES — 2026 EDITION — MODULARITY — "}
+              {config.marquee?.text || "OSNOVA LAB SERIES — 2026 EDITION — MODULARITY — "}
             </span>
           ))}
         </div>

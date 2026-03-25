@@ -2,7 +2,7 @@
 
 import "./globals.css";
 import { useEffect, useState } from "react";
-import { VelosProvider } from "@/context/VelosContext";
+import { OSNOVAProvider } from "@/context/OSNOVAContext";
 import ScrollToTop from "@/components/ScrollToTop";
 
 function AppContent({ children }: { children: React.ReactNode }) {
@@ -36,9 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-black text-white selection:bg-white selection:text-black"> 
-        <VelosProvider>
+        <OSNOVAProvider>
           <AppContent>{children}</AppContent>
-        </VelosProvider>
+        </OSNOVAProvider>
       </body>
     </html>
   );

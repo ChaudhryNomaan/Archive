@@ -13,7 +13,7 @@ Object.keys(CAT_MAP).forEach((cat, ci) => {
       const idx = (ci + si + i) % ASSETS.length;
 
       MASTER_VAULT.push({
-        id: `velos-${catPath}-${subPath}-${i}`,
+        id: `OSNOVA-${catPath}-${subPath}-${i}`,
         category: cat,
         subCategory: sub,
         name: cat === "COMMUNE" ? `${sub.toUpperCase()} // VOL.${i < 10 ? '0'+i : i}` : `${sub.toUpperCase()} UNIT ${100 + i}`,
