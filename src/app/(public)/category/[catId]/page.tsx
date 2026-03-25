@@ -1,163 +1,104 @@
 "use client";
-import { useState, useEffect, useMemo, use } from 'react';
+
 import Link from 'next/link';
-import { CAT_MAP } from '@/lib/constants';
-import Media from '@/components/Media';
+import React, { useState, useEffect, use, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
 
-// IMPORTANT: Ensure you import the correct hook for city context here
-// import { useCity } from '@/context/CityContext'; 
+const supabase = createClient();
 
 export default function CategoryPage({ params }: { params: Promise<{ catId: string }> }) {
-  const { catId } = use(params);
+  const resolvedParams = use(params);
+  const catId = resolvedParams?.catId;  
   
-  // NOTE: Replace 'useVelos' with your actual city context hook (e.g., useCity)
-  // If you don't have a hook, you may need to define selectedCity or fetch it.
-  const { selectedCity } = (global as any).useVelos?.() || { selectedCity: 'moscow' }; 
-  
-  const [activeSub, setActiveSub] = useState("");
-  const [vaultData, setVaultData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-  
-  const supabase = createClient();
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const dbCategoryMatch = useMemo(() => {
+    if (!catId) return "";
+    return decodeURIComponent(catId).toUpperCase();
+  }, [catId]);
 
   useEffect(() => {
-    setMounted(true);
-
-    if (CAT_MAP[catId] && CAT_MAP[catId].length > 0) {
-      setActiveSub(CAT_MAP[catId][0]);
-    }
-
-    const fetchVault = async () => {
-      if (!selectedCity) {
-        setIsLoading(false);
-        return;
-      }
-
+    async function fetchCategoryData() {
+      if (!dbCategoryMatch) return;
+      setLoading(true);
       try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('category', catId);
-
+        let query = supabase.from('products').select('*');
+        if (dbCategoryMatch.includes("JEAN") || dbCategoryMatch.includes("PANT")) {
+          query = query.ilike('sub_category', '%JEAN%');
+        } else if (dbCategoryMatch.includes("TSHIRT") || dbCategoryMatch.includes("T-SHIRT")) {
+          query = query.ilike('sub_category', '%T%SHIRT%');
+        } else {
+          query = query.ilike('sub_category', `%${dbCategoryMatch}%`);
+        }
+        const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
-        setVaultData(data || []);
-      } catch (error: any) {
-        console.error("Failed to load vault:", error.message || error);
-        setVaultData([]);
+        setProducts(data || []);
+      } catch (err) {
+        console.error("Fetch Error:", String(err));
       } finally {
-        setIsLoading(false);
+        setLoading(false);
+        setHasFetched(true);
       }
-    };
+    }
+    fetchCategoryData();
+  }, [dbCategoryMatch]);
 
-    fetchVault();
-  }, [catId, selectedCity]); // Added selectedCity to dependency array
-
-  const items = useMemo(() => {
-    if (!Array.isArray(vaultData)) return [];
-    return vaultData.filter(i => {
-      const itemSub = i.sub_category || i.subcategory || "";
-      return i.category === catId && 
-             i.city_id === selectedCity && 
-             String(itemSub).toLowerCase() === String(activeSub).toLowerCase();
-    });
-  }, [catId, activeSub, vaultData, selectedCity]);
-
-  if (!mounted) return <div className="cat-root" />;
+  const categoryTitle = decodeURIComponent(catId || "").toUpperCase().replace('-', ' / ');
 
   return (
-    <div className="cat-root">
-      <aside className="cat-sidebar">
-        <span className="cat-breadcrumb">
-          ARCHIVE {" // "} {selectedCity?.toUpperCase() || "SELECT_CITY"} {" // "} {catId}
-        </span>
-        
-        <nav className="cat-nav-list">
-          {CAT_MAP[catId]?.map(sub => (
-            <button 
-              key={sub} 
-              className={activeSub === sub ? 'active' : ''} 
-              onClick={() => setActiveSub(sub)}
-            >
-              {activeSub === sub && <div className="active-indicator" />}
-              {sub.toUpperCase()}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    // min-h-[100vh] prevents the footer from jumping up
+    <div className="cat-root min-h-screen">
+      
+      <div className="cat-sidebar">
+        <span className="cat-breadcrumb stagger-in">{categoryTitle}</span>
+      </div>
 
       <div className="cat-grid">
-        {isLoading ? (
-          <div className="loading-state" style={{ padding: '20px', fontSize: '10px', letterSpacing: '2px', color: '#444' }}>
-            SYNCHRONIZING_{selectedCity?.toUpperCase()}_ARCHIVE...
-          </div>
-        ) : items.length > 0 ? (
-          items.map((item, idx) => {
-            const currentPrice = item.price || item.itemPrice;
-            
-            let finalUrl = "";
-            try {
-              if (typeof item.image_url === 'string') {
-                if (item.image_url.startsWith('[') || item.image_url.startsWith('{')) {
-                  const parsed = JSON.parse(item.image_url);
-                  finalUrl = Array.isArray(parsed) ? parsed[0] : parsed;
-                } else {
-                  finalUrl = item.image_url;
-                }
-              } else if (Array.isArray(item.image_url)) {
-                finalUrl = item.image_url[0];
-              }
-            } catch (e) {
-              finalUrl = item.image_url;
-            }
+        {loading ? (
+          // SKELETON STATE: 6 Empty cards to hold the space during fetch
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="cat-card animate-pulse">
+              <div className="cc-media bg-gray-100" />
+              <div className="cc-info">
+                <div className="h-2 w-12 bg-gray-100 mb-4" />
+                <div className="h-4 w-32 bg-gray-100" />
+              </div>
+            </div>
+          ))
+        ) : (
+          products.map((product) => {
+            const hasMedia = product.image_url && product.image_url.trim() !== "";
+            const isVideo = hasMedia && product.image_url.match(/\.(mp4|webm|mov)$/i);
 
             return (
-              <Link 
-                key={item.id} 
-                href={`/product/${item.slug}`} 
-                className="cat-card stagger-in" 
-                style={{ animationDelay: `${idx * 0.05}s` }}
-              >
-                <div className="cc-media reveal-frame">
-                  <Media item={{ 
-                    ...item, 
-                    media: finalUrl,
-                    basePath: finalUrl 
-                  }} />
+              <Link key={product.id} href={`/product/${product.id}`} className="cat-card stagger-in">
+                <div className="cc-media">
+                  {!hasMedia ? (
+                    <div className="flex items-center justify-center h-full text-[10px] tracking-widest text-gray-300 font-bold">MISSING_ASSET</div>
+                  ) : isVideo ? (
+                    <video src={product.image_url} autoPlay loop muted playsInline />
+                  ) : (
+                    <img src={product.image_url} alt={product.name} />
+                  )}
                 </div>
-                
                 <div className="cc-info">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span className="sku">{item.sku || item.id}</span>
-                    {item.specifications?.size && (
-                      <span style={{ fontSize: '8px', color: '#555', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        SZ: {item.specifications.size}
-                      </span>
-                    )}
-                  </div>
-                  <h4>{item.name}</h4>
-                  <div className="price-line">
-                    <span style={{ color: '#fff' }}>
-                      {currentPrice ? `€${currentPrice}` : "TBA"}
-                    </span>
-                  </div>
+                  <span className="sku">{product.sku || 'AETHER-ARCHIVE'}</span>
+                  <h4>{product.name}</h4>
+                  <p className="price-tag">₽ {Number(product.price).toLocaleString()}</p>
                 </div>
               </Link>
-            );
+            )
           })
-        ) : (
-          <div className="empty-state" style={{ padding: '20px', fontSize: '10px', color: '#444', letterSpacing: '1px' }}>
-            NO_DATA_FOUND // {selectedCity?.toUpperCase()} // SECTOR_{catId?.toUpperCase()}
-          </div>
         )}
       </div>
 
-      <style jsx>{`
-        .price-line { margin-top: 5px; font-size: 11px; letter-spacing: 1px; }
-        .empty-state { grid-column: 1 / -1; height: 200px; display: flex; align-items: center; justify-content: center; border: 1px dashed #1a1a1a; }
-      `}</style>
+      {hasFetched && !loading && products.length === 0 && (
+        <div className="w-full text-center py-60 text-[10px] tracking-[6px] font-black text-gray-400 uppercase">
+          Archive Empty for {categoryTitle}
+        </div>
+      )}
     </div>
   );
 }

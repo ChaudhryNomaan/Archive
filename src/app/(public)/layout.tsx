@@ -16,7 +16,7 @@ export default function PublicLayout({
 }) {
   const pathname = usePathname();
   
-  // Exclude UI elements from the Admin/Atelier section
+  // Detects if we are in the admin dashboard to strip away public-facing UI
   const isAdmin = pathname?.startsWith('/admin');
 
   return (
@@ -27,7 +27,6 @@ export default function PublicLayout({
           <Nav />
           <MobileOverlay />
           <ShoppingBag />
-          {/* Global scroll-to-top functionality */}
           <ScrollToTop />
         </>
       )}

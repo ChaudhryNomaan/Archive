@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { CAT_MAP } from '@/lib/constants';
 import { createClient } from '@/lib/supabase';
 
-// Helper functions kept exactly as provided
-const generateUniqueId = (name: string, cityId: string) => {
+// Updated flat structure to match your new navigation
+const ARCHIVE_CATEGORIES = ["JEANS/PANTS", "T-SHIRTS", "JACKETS", "SHIRTS"];
+
+const generateUniqueId = (name: string) => {
   const base = name.toUpperCase().trim().replace(/ /g, '').replace(/[^\w-]+/g, '').substring(0, 4);
   const entropy = Date.now().toString(36).substring(4).toUpperCase();
-  return `${base}-${entropy}-${cityId.toUpperCase()}`;
+  return `${base}-${entropy}-GLOBAL`;
 };
 
 const generateSlug = (name: string) => {
@@ -29,20 +30,18 @@ function LuxurySelect({ label, value, options, onChange }: { label: string, valu
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayValue = value === 'all' ? 'ALL CITIES' : value?.toUpperCase() || 'SELECT...';
-
   return (
     <div className="luxury-select-container" ref={containerRef}>
       <label className="select-label">{label}</label>
       <div className="select-trigger" onClick={() => setIsOpen(!isOpen)}>
-        <span>{displayValue}</span>
+        <span>{value?.toUpperCase() || 'SELECT...'}</span>
         <span className={`arrow ${isOpen ? 'up' : ''}`}>▼</span>
       </div>
       {isOpen && (
         <ul className="select-options">
           {options.map((opt) => (
             <li key={opt} className={opt === value ? "active" : ""} onClick={() => { onChange(opt); setIsOpen(false); }}>
-              {opt === 'all' ? 'ALL CITIES' : opt.toUpperCase()}
+              {opt.toUpperCase()}
             </li>
           ))}
         </ul>
@@ -64,12 +63,10 @@ function LuxurySelect({ label, value, options, onChange }: { label: string, valu
 
 export default function ArchiveAdmin() {
   const [items, setItems] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]); // Dynamic cities state
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedFiles, setSelectedFiles] = useState<{file: File, preview: string}[]>([]);
   const [existingMedia, setExistingMedia] = useState<string[]>([]);
-  const [viewCity, setViewCity] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,28 +74,17 @@ export default function ArchiveAdmin() {
 
   const [formValues, setFormValues] = useState({
     name: '', sku: '', price: '', size: '',
-    category: Object.keys(CAT_MAP)[0],
-    subCategory: CAT_MAP[Object.keys(CAT_MAP)[0]][0],
-    cityId: '' 
+    category: 'COLLECTION', // We default this to 'COLLECTION' for the DB query
+    subCategory: ARCHIVE_CATEGORIES[0] // User selects from our 4 main types
   });
-
-  // Fetch Cities from DB
-  const fetchCities = async () => {
-    const { data } = await supabase.from('cities').select('*').order('name', { ascending: true });
-    if (data) {
-      setCities(data);
-      if (!formValues.cityId && data.length > 0) {
-        setFormValues(prev => ({ ...prev, cityId: data[0].id }));
-      }
-    }
-  };
 
   const fetchVault = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('products').select('*');
-      if (viewCity !== 'all') query = query.eq('city_id', viewCity);
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
       if (error) throw error;
       setItems(data || []);
     } catch (error) {
@@ -109,9 +95,8 @@ export default function ArchiveAdmin() {
   };
 
   useEffect(() => { 
-    fetchCities(); 
     fetchVault(); 
-  }, [viewCity]);
+  }, []);
 
   const filteredItems = useMemo(() => {
     return items.filter(item => 
@@ -127,9 +112,8 @@ export default function ArchiveAdmin() {
         sku: editingItem.sku || '',
         price: editingItem.price?.toString() || '',
         size: editingItem.specifications?.size || '',
-        category: editingItem.category || Object.keys(CAT_MAP)[0],
-        subCategory: editingItem.sub_category || CAT_MAP[Object.keys(CAT_MAP)[0]][0],
-        cityId: editingItem.city_id || (cities[0]?.id || '')
+        category: editingItem.category || 'COLLECTION',
+        subCategory: editingItem.sub_category || ARCHIVE_CATEGORIES[0]
       });
       const combined = [editingItem.image_url, ...(editingItem.media || [])].filter(Boolean);
       setExistingMedia(combined);
@@ -146,9 +130,8 @@ export default function ArchiveAdmin() {
     setExistingMedia([]);
     setFormValues({
       name: '', sku: '', price: '', size: '',
-      category: Object.keys(CAT_MAP)[0],
-      subCategory: CAT_MAP[Object.keys(CAT_MAP)[0]][0],
-      cityId: cities[0]?.id || ''
+      category: 'COLLECTION',
+      subCategory: ARCHIVE_CATEGORIES[0]
     });
   };
 
@@ -164,7 +147,6 @@ export default function ArchiveAdmin() {
     setSelectedFiles(prev => [...prev, ...newEntries]);
   };
 
-  // Helper to remove files from the preview list
   const removeSelectedFile = (idx: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== idx));
   };
@@ -192,7 +174,7 @@ export default function ArchiveAdmin() {
         name: formValues.name,
         price: parseFloat(formValues.price) || 0,
         category: formValues.category,
-        sub_category: formValues.subCategory,
+        sub_category: formValues.subCategory, // Saved into sub_category column
         image_url: allMedia[0] || '',
         media: allMedia.slice(1),
         specifications: { size: formValues.size }
@@ -202,27 +184,16 @@ export default function ArchiveAdmin() {
         await supabase.from('products').update({ 
           ...basePayload, 
           sku: formValues.sku || editingItem.sku,
-          city_id: formValues.cityId 
+          city_id: null 
         }).eq('id', editingItem.id);
       } else {
-        if (formValues.cityId === 'all') {
-          const bulkPayload = cities.map(city => ({
-            ...basePayload,
-            city_id: city.id,
-            sku: generateUniqueId(formValues.name, city.id),
-            slug: `${generateSlug(formValues.name)}-${city.id}`
-          }));
-          const { error } = await supabase.from('products').insert(bulkPayload);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('products').insert([{ 
-            ...basePayload, 
-            sku: formValues.sku || generateUniqueId(formValues.name, formValues.cityId),
-            city_id: formValues.cityId, 
-            slug: generateSlug(formValues.name) 
-          }]);
-          if (error) throw error;
-        }
+        const { error } = await supabase.from('products').insert([{ 
+          ...basePayload, 
+          sku: formValues.sku || generateUniqueId(formValues.name),
+          city_id: null, 
+          slug: generateSlug(formValues.name) 
+        }]);
+        if (error) throw error;
       }
 
       resetForm();
@@ -254,8 +225,8 @@ export default function ArchiveAdmin() {
       <header className="luxury-header">
         <div className="accent-line"></div>
         <div className="header-meta">
-          <span>ENGINE_V2.5 // LIVE_SEARCH</span>
-          <span>LOCATION_AWARE_INVENTORY</span>
+          <span>ENGINE_V3.0 // GLOBAL_VAULT</span>
+          <span>UNIFIED_INVENTORY_SYSTEM</span>
         </div>
         <h1 className="luxury-title">ARCHIVE <span className="serif-italic">& Vault</span></h1>
       </header>
@@ -265,15 +236,6 @@ export default function ArchiveAdmin() {
           <h3 className="card-subtitle">{editingItem ? 'MODIFY RECORD' : 'NEW ENTRY'}</h3>
           <form onSubmit={handleSave} className="luxury-stack">
             
-            <div className="input-group">
-              <LuxurySelect 
-                label="LOCATION TARGET" 
-                value={formValues.cityId} 
-                options={['all', ...cities.map(c => c.id)]} 
-                onChange={(val) => setFormValues({...formValues, cityId: val})} 
-              />
-            </div>
-
             <div className="input-group">
               <label>IDENTIFIER</label>
               <input className="luxury-input" placeholder="PRODUCT NAME" value={formValues.name} onChange={e => setFormValues({...formValues, name: e.target.value})} required />
@@ -302,14 +264,18 @@ export default function ArchiveAdmin() {
             </div>
 
             <div className="luxury-row">
-              <LuxurySelect label="CATEGORY" value={formValues.category} options={Object.keys(CAT_MAP)} onChange={(val) => setFormValues({...formValues, category: val, subCategory: CAT_MAP[val][0]})} />
-              <LuxurySelect label="SUB-ARCHIVE" value={formValues.subCategory} options={CAT_MAP[formValues.category] || []} onChange={(val) => setFormValues({...formValues, subCategory: val})} />
+              {/* Only one selector needed now as we use the flat ARCHIVE_CATEGORIES list */}
+              <LuxurySelect 
+                label="SECTOR" 
+                value={formValues.subCategory} 
+                options={ARCHIVE_CATEGORIES} 
+                onChange={(val) => setFormValues({...formValues, subCategory: val})} 
+              />
             </div>
 
             <div className="input-group">
               <label>MEDIA ASSETS</label>
 
-              {/* MEDIA PREVIEW SECTION */}
               {(existingMedia.length > 0 || selectedFiles.length > 0) && (
                 <div className="media-preview-grid">
                   {existingMedia.map((url, idx) => (
@@ -344,15 +310,6 @@ export default function ArchiveAdmin() {
 
         <div className="inventory-container">
           <div className="inventory-controls">
-            <div className="city-filter-tabs">
-              <button className={viewCity === 'all' ? 'active' : ''} onClick={() => setViewCity('all')}>GLOBAL</button>
-              {cities.map(c => (
-                <button key={c.id} className={viewCity === c.id ? 'active' : ''} onClick={() => setViewCity(c.id)}>
-                  {c.name}
-                </button>
-              ))}
-            </div>
-            
             <div className="search-node">
               <input 
                 type="text" 
@@ -380,7 +337,7 @@ export default function ArchiveAdmin() {
                 <span className="col-name">
                   {item.name}
                   <div className="row-sub-info">
-                    {item.category} — <span className="city-tag">{item.city_id?.toUpperCase()}</span>
+                    {item.sub_category}
                   </div>
                 </span>
                 <span className="col-price">€{item.price}</span>
@@ -394,7 +351,7 @@ export default function ArchiveAdmin() {
       </div>
 
       <style jsx>{`
-        /* Style block kept exactly as provided */
+        /* Styles remain identical to your original code */
         .luxury-archive { padding: 40px; max-width: 100%; margin: 0 auto; color: #fff; background: #000; min-height: 100vh; font-family: -apple-system, sans-serif; overflow-x: hidden; }
         .luxury-header { margin-bottom: 60px; }
         .accent-line { width: 40px; height: 1px; background: #d4af37; margin-bottom: 20px; }
@@ -403,10 +360,6 @@ export default function ArchiveAdmin() {
         .serif-italic { font-family: serif; font-style: italic; color: #444; }
         .admin-split-layout { display: grid; grid-template-columns: 380px 1fr; gap: 60px; align-items: start; width: 100%; }
         .inventory-controls { margin-bottom: 30px; }
-        .city-filter-tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #111; padding-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
-        .city-filter-tabs::-webkit-scrollbar { display: none; }
-        .city-filter-tabs button { background: none; border: none; color: #444; font-size: 8px; letter-spacing: 2px; cursor: pointer; white-space: nowrap; padding: 5px 0; }
-        .city-filter-tabs button.active { color: #d4af37; border-bottom: 1px solid #d4af37; }
         .search-node { position: relative; display: flex; align-items: center; background: #050505; border: 1px solid #111; padding: 10px 20px; }
         .luxury-search-input { background: none; border: none; color: #fff; font-size: 10px; letter-spacing: 2px; flex: 1; outline: none; text-transform: uppercase; }
         .search-count { font-size: 8px; color: #444; letter-spacing: 1px; }
@@ -418,7 +371,6 @@ export default function ArchiveAdmin() {
         .col-sku { color: #d4af37; font-size: 8px; font-weight: 800; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .col-name { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
         .row-sub-info { font-weight: 400; color: #444; font-size: 8px; margin-top: 6px; }
-        .city-tag { color: #d4af37; }
         .col-price { font-size: 11px; text-align: right; }
         .luxury-form-container { background: #050505; border: 1px solid #111; padding: 30px; position: sticky; top: 40px; }
         .card-subtitle { font-size: 9px; letter-spacing: 5px; color: #d4af37; margin-bottom: 30px; text-transform: uppercase; }
@@ -437,8 +389,6 @@ export default function ArchiveAdmin() {
         .upload-block { border: 1px dashed #222; padding: 20px; text-align: center; color: #444; font-size: 9px; cursor: pointer; }
         .cancel-btn { background: none; border: none; color: #444; font-size: 8px; margin-top: 10px; cursor: pointer; text-transform: uppercase; }
         .empty-msg { font-size: 8px; letter-spacing: 2px; color: #333; text-align: center; margin-top: 40px; }
-
-        /* Preview Grid New Styles */
         .media-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         .preview-item { position: relative; aspect-ratio: 1; background: #111; border: 1px solid #222; overflow: hidden; }
         .preview-item img { width: 100%; height: 100%; object-fit: cover; }

@@ -2,14 +2,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useVelos } from '@/context/VelosContext';
-import { CAT_MAP } from '@/lib/constants';
 import { createClient } from '@/lib/supabase';
+
+// SYNC: Match these to your Nav.tsx sectors
+const NAV_SECTORS = ["JEANS/PANTS", "T-SHIRTS", "JACKETS", "SHIRTS"];
 
 export default function MobileOverlay() {
   const supabase = createClient();
   const { isMenuOpen, setIsMenuOpen } = useVelos();
   
-  // State for all dynamic parts of the menu
   const [menuSettings, setMenuSettings] = useState({
     menuLabel: 'MENU',
     menuVideo: '/images/hero-section.mp4',
@@ -19,7 +20,6 @@ export default function MobileOverlay() {
   });
 
   useEffect(() => {
-    // 1. Fetch combined settings from Supabase
     const fetchMenuSettings = async () => {
       try {
         const { data, error } = await supabase
@@ -44,10 +44,8 @@ export default function MobileOverlay() {
       }
     };
 
-    fetchMenuSettings();
-
-    // 2. Existing Body Scroll Lock
     if (isMenuOpen) {
+      fetchMenuSettings();
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -64,7 +62,7 @@ export default function MobileOverlay() {
       <div className="menu-visual">
         {menuSettings.menuVideo && (
           <video 
-            key={menuSettings.menuVideo} // Key forces re-load if path changes
+            key={menuSettings.menuVideo} 
             src={menuSettings.menuVideo} 
             autoPlay loop muted playsInline 
             className="object-cover"
@@ -79,16 +77,24 @@ export default function MobileOverlay() {
           <Link href="/" onClick={() => setIsMenuOpen(false)} className="stagger-in" style={{ animationDelay: '0.1s' }}>
             HOME
           </Link>
-          {Object.keys(CAT_MAP).map((c, i) => (
-            <Link 
-              key={c} href={`/category/${c}`} 
-              onClick={() => setIsMenuOpen(false)} 
-              className="stagger-in" 
-              style={{ animationDelay: `${0.2 + (i * 0.1)}s` }}
-            >
-              {c.toUpperCase()}
-            </Link>
-          ))}
+          
+          {/* FIXED LINK GENERATION */}
+          {NAV_SECTORS.map((sector, i) => {
+            // SYNC: logic must match Nav.tsx: "JEANS/PANTS" -> "jeans-pants"
+            const catIdParam = sector.toLowerCase().replace('/', '-');
+            
+            return (
+              <Link 
+                key={sector} 
+                href={`/category/${catIdParam}`} 
+                onClick={() => setIsMenuOpen(false)} 
+                className="stagger-in" 
+                style={{ animationDelay: `${0.2 + (i * 0.1)}s` }}
+              >
+                {sector}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="menu-footer">

@@ -8,7 +8,7 @@ export default function Home() {
   const supabase = createClient();
   const [hasMounted, setHasMounted] = useState(false);
   
-  // Set default values here so the site works even if the DB is empty
+  // Default configuration: Clean, city-agnostic branding
   const [config, setConfig] = useState<any>({
     hero: {
       title: 'VELOS ARCHIVE',
@@ -33,9 +33,8 @@ export default function Home() {
           .eq('section_name', 'hero')
           .single();
 
-        // If there's an error (like no row found), we just keep the defaults
         if (error) {
-          console.warn("No hero config found in Supabase, using defaults.");
+          console.warn("Using default hero configuration.");
           return;
         }
 
@@ -50,6 +49,7 @@ export default function Home() {
     fetchHeroConfig();
   }, [supabase]);
 
+  // Prevents flash of unstyled content or hydration errors
   if (!hasMounted) {
     return <div className="home-container bg-black min-h-screen" />;
   }
@@ -65,7 +65,7 @@ export default function Home() {
             muted 
             playsInline 
             className="h-hero-img"
-            key={config.hero.videoSrc}
+            key={config.hero.videoSrc} // Ensures video reloads if the source changes
           />
         )}
         
