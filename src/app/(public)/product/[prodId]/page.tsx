@@ -17,6 +17,11 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // --- RESTORED STATES ---
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '', address: '' });
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
   const minSwipeDistance = 50;
@@ -53,6 +58,48 @@ export default function ProductPage() {
 
     fetchProduct();
   }, [prodId]);
+
+  // --- RESTORED HANDLER ---
+  const handleFinalOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsRedirecting(true);
+
+    try {
+      const { data: settings } = await supabase
+        .from('admin_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      const activeMethod = settings?.active_notification_method || 'whatsapp';
+      const recipient = settings?.notification_recipient || '';
+
+      const messageText = 
+        `НОВЕ ЗАМОВЛЕННЯ // OSNOVA\n\n` +
+        `Клієнт: ${userInfo.name}\n` +
+        `Телефон: ${userInfo.phone}\n` +
+        `Email: ${userInfo.email}\n` +
+        `Адреса: ${userInfo.address}\n\n` +
+        `ТОВАР: ${product.name}\n` +
+        `Розмір: ${selectedSize}\n` +
+        `Ціна: ${product.price} ₴\n` +
+        `Посилання: ${window.location.href}`;
+
+      const encodedMessage = encodeURIComponent(messageText);
+
+      if (activeMethod === 'whatsapp') {
+        window.open(`https://wa.me/${recipient.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
+      } else {
+        window.open(`https://t.me/${recipient.replace('@', '')}`, '_blank');
+      }
+
+      setShowCheckoutModal(false);
+    } catch (error) {
+      console.error("Order error:", error);
+    } finally {
+      setIsRedirecting(false);
+    }
+  };
 
   const mediaItems = product ? [product.image_url, ...(product.media || [])].filter(Boolean) : [];
   
@@ -179,6 +226,11 @@ export default function ProductPage() {
         .size-btn { background: #fff; border: none; padding: 15px; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.3s; }
         .size-btn.active { background: #000; color: #fff; }
 
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 40px; width: 90%; max-width: 500px; position: relative; }
+        .close-modal { position: absolute; top: 20px; right: 20px; background: none; border: none; font-weight: 900; cursor: pointer; }
+        .checkout-input { width: 100%; border: none; border-bottom: 1px solid #000; padding: 15px 0; margin-bottom: 20px; outline: none; font-family: inherit; font-weight: 700; text-transform: uppercase; font-size: 12px; }
+
         .skeleton-shimmer {
           background: #f6f7f8;
           background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
@@ -198,7 +250,7 @@ export default function ProductPage() {
           .pd-visual { 
             position: relative; 
             top: 0; 
-            height: 65vh; /* Enough height to show product but keep sidebar visible below */
+            height: 65vh; 
             flex: none;
             width: 100%;
           }
@@ -224,7 +276,7 @@ export default function ProductPage() {
         <div className="modal-overlay">
           <div className="modal-content">
             <button className="close-modal" onClick={() => setShowCheckoutModal(false)}>✕ CLOSE</button>
-            <h2 className="modal-title">Контактна інформація</h2>
+            <h2 className="modal-title" style={{fontWeight: 900, textTransform: 'uppercase', marginBottom: '30px'}}>Контактна інформація</h2>
             <form onSubmit={handleFinalOrder}>
               <input 
                 className="checkout-input" 
@@ -366,8 +418,7 @@ export default function ProductPage() {
                     width: '100%', background: '#fff', color: '#000', border: '1px solid #000', padding: '24px', fontWeight: 900, fontSize: '11px', letterSpacing: '3px', cursor: 'pointer', textTransform: 'uppercase'
                   }}
                   onClick={() => {
-                    addToBag({ ...product, media: product.image_url, selectedSize });
-                    router.push('/checkout');
+                    setShowCheckoutModal(true);
                   }}
                 >
                   BUY IT NOW
