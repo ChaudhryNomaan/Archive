@@ -4,15 +4,20 @@ import Link from 'next/link';
 import { useOSNOVA } from '../context/OSNOVAContext';
 import { createClient } from '@/lib/supabase';
 
-// SYNC: Match these to your Nav.tsx sectors
-const NAV_SECTORS = ["JEANS/PANTS", "T-SHIRTS", "JACKETS", "SHIRTS"];
+// SYNC: Exact labels and params from your Nav.tsx
+const NAV_SECTORS = [
+  { label: "ЧОЛОВІЧЕ ВЗУТТЯ", param: "men-shoes" },
+  { label: "ЖІНОЧЕ ВЗУТТЯ", param: "women-shoes" },
+  { label: "СОРОЧКИ", param: "shirts" },
+  { label: "ШОРТИ", param: "shorts" }
+];
 
 export default function MobileOverlay() {
   const supabase = createClient();
   const { isMenuOpen, setIsMenuOpen } = useOSNOVA();
   
   const [menuSettings, setMenuSettings] = useState({
-    menuLabel: 'MENU',
+    menuLabel: 'МЕНЮ',
     menuVideo: '/images/hero-section.mp4',
     project: 'OSNOVA ARCHIVE © 2026',
     instagram: '#',
@@ -32,7 +37,7 @@ export default function MobileOverlay() {
 
         if (data?.content) {
           setMenuSettings({
-            menuLabel: data.content.menuLabel || 'MENU',
+            menuLabel: data.content.menuLabel || 'МЕНЮ',
             menuVideo: data.content.menuVideo || '/images/hero-section.mp4',
             project: data.content.project || 'OSNOVA ARCHIVE © 2026',
             instagram: data.content.instagram || '#',
@@ -57,7 +62,7 @@ export default function MobileOverlay() {
 
   return (
     <div className="menu-overlay">
-      <button className="menu-close-x" onClick={() => setIsMenuOpen(false)}>CLOSE</button>
+      <button className="menu-close-x" onClick={() => setIsMenuOpen(false)}>ЗАКРИТИ</button>
 
       <div className="menu-visual">
         {menuSettings.menuVideo && (
@@ -75,26 +80,21 @@ export default function MobileOverlay() {
         
         <nav className="menu-links">
           <Link href="/" onClick={() => setIsMenuOpen(false)} className="stagger-in" style={{ animationDelay: '0.1s' }}>
-            HOME
+            ГОЛОВНА
           </Link>
           
-          {/* FIXED LINK GENERATION */}
-          {NAV_SECTORS.map((sector, i) => {
-            // SYNC: logic must match Nav.tsx: "JEANS/PANTS" -> "jeans-pants"
-            const catIdParam = sector.toLowerCase().replace('/', '-');
-            
-            return (
-              <Link 
-                key={sector} 
-                href={`/category/${catIdParam}`} 
-                onClick={() => setIsMenuOpen(false)} 
-                className="stagger-in" 
-                style={{ animationDelay: `${0.2 + (i * 0.1)}s` }}
-              >
-                {sector}
-              </Link>
-            );
-          })}
+          {/* UPDATED LINK GENERATION TO MATCH NAV.TSX */}
+          {NAV_SECTORS.map((sector, i) => (
+            <Link 
+              key={sector.param} 
+              href={`/category/${sector.param}`} 
+              onClick={() => setIsMenuOpen(false)} 
+              className="stagger-in" 
+              style={{ animationDelay: `${0.2 + (i * 0.1)}s` }}
+            >
+              {sector.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="menu-footer">
