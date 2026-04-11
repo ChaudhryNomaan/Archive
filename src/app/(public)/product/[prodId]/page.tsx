@@ -16,16 +16,6 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // New states for User Info
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [userInfo, setUserInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: ''
-  });
 
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
@@ -63,61 +53,6 @@ export default function ProductPage() {
 
     fetchProduct();
   }, [prodId]);
-
-  const handleBuyNowClick = () => {
-    if (!selectedSize) {
-      alert("Будь ласка, спочатку оберіть розмір.");
-      return;
-    }
-    setShowCheckoutModal(true);
-  };
-
-  const handleFinalOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsRedirecting(true);
-
-    try {
-      const { data: settings } = await supabase
-        .from('admin_settings')
-        .select('*')
-        .eq('id', 1)
-        .single();
-
-      const activeMethod = settings?.active_notification_method || 'whatsapp';
-      const recipient = settings?.notification_recipient || '380000000000';
-
-      // Included image_url in the message template
-      const messageText = 
-        `НОВЕ ЗАМОВЛЕННЯ // OSNOVA\n\n` +
-        `ДАНІ КЛІЄНТA:\n` +
-        `Ім'я: ${userInfo.name}\n` +
-        `Email: ${userInfo.email}\n` +
-        `Тел: ${userInfo.phone}\n` +
-        `Адреса: ${userInfo.address}\n\n` +
-        `ТОВАР:\n` +
-        `Назва: ${product.name}\n` +
-        `Розмір: ${selectedSize}\n` +
-        `Ціна: ${product.price?.toLocaleString()} ₴\n` +
-        `Посилання: ${product.image_url}`;
-
-      const encodedMessage = encodeURIComponent(messageText);
-      let url = "";
-
-      if (activeMethod === 'whatsapp') {
-        const cleanPhone = recipient.replace(/\D/g, '');
-        url = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-      } else if (activeMethod === 'telegram') {
-        url = `https://t.me/${recipient.replace('@', '')}`;
-      }
-
-      if (url) window.open(url, '_blank');
-      setShowCheckoutModal(false);
-    } catch (err) {
-      console.error("Помилка перенаправлення замовлення:", err);
-    } finally {
-      setIsRedirecting(false);
-    }
-  };
 
   const mediaItems = product ? [product.image_url, ...(product.media || [])].filter(Boolean) : [];
   
@@ -158,14 +93,78 @@ export default function ProductPage() {
   return (
     <div className="pd-root">
       <style jsx>{`
-        .pd-root { display: flex; min-height: 100vh; background: #fff; color: #000; padding-top: 100px; }
-        .pd-visual { flex: 1.2; position: sticky; top: 100px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; height: calc(100vh - 100px); overflow: hidden; }
-        .pd-gallery-container { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
-        .pd-gallery-item { grid-area: 1 / 1; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.6s ease; padding: 60px; }
-        .pd-gallery-item.active { opacity: 1; visibility: visible; z-index: 2; }
-        .pd-gallery-item img, .pd-gallery-item video { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .gallery-controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
-        .control-dot { width: 30px; height: 2px; background: #000; opacity: 0.1; cursor: pointer; transition: 0.3s; }
+        .pd-root { 
+          display: flex; 
+          min-height: 100vh; 
+          background: #fff; 
+          color: #000; 
+          padding-top: 100px;
+        }
+        
+        .pd-visual { 
+          flex: 1.2; 
+          position: sticky; 
+          top: 100px;
+          background: #f9f9f9; 
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: calc(100vh - 100px);
+          overflow: hidden;
+        }
+
+        .pd-gallery-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: grid;
+          place-items: center;
+        }
+
+        .pd-gallery-item { 
+          grid-area: 1 / 1;
+          width: 100%;
+          height: 100%;
+          display: flex; 
+          align-items: center; 
+          justify-content: center;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.6s ease;
+          padding: 60px;
+        }
+
+        .pd-gallery-item.active {
+          opacity: 1;
+          visibility: visible;
+          z-index: 2;
+        }
+
+        .pd-gallery-item img, .pd-gallery-item video {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        
+        .gallery-controls {
+          position: absolute;
+          bottom: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 15px;
+          z-index: 10;
+        }
+
+        .control-dot {
+          width: 30px;
+          height: 2px;
+          background: #000;
+          opacity: 0.1;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
         .control-dot.active { opacity: 1; }
         .pd-sidebar { flex: 0 0 500px; background: #fff; border-left: 1px solid #eee; }
         .pd-sticky-wrap { padding: 60px 50px; display: flex; flex-direction: column; gap: 40px; }
@@ -179,32 +178,45 @@ export default function ProductPage() {
         .size-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 1px; background: #eee; border: 1px solid #eee; }
         .size-btn { background: #fff; border: none; padding: 15px; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.3s; }
         .size-btn.active { background: #000; color: #fff; }
-        .skeleton-shimmer { background: #f6f7f8; background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%); background-repeat: no-repeat; background-size: 800px 100%; animation: shimmer 1.5s infinite linear; }
-        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
-        
-        /* Modal Styles */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: #fff; width: 100%; max-width: 450px; padding: 40px; position: relative; }
-        .modal-title { font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .checkout-input { 
-          width: 100%; 
-          border: none; 
-          border-bottom: 1px solid #ddd; 
-          padding: 15px 0; 
-          font-size: 11px; 
-          letter-spacing: 1px; 
-          margin-bottom: 20px; 
-          outline: none; 
-          text-transform: uppercase; 
-          font-weight: 700;
-          color: #000; /* Force text to be black */
-          background: transparent;
-        }
-        .checkout-input:focus { border-bottom-color: #000; }
-        .close-modal { position: absolute; top: 20px; right: 20px; border: none; background: none; font-weight: 900; cursor: pointer; font-size: 12px; }
 
-        @media (max-width: 1024px) { .pd-root { flex-direction: column; padding-top: 80px; } .pd-visual { position: relative; top: 0; height: 65vh; flex: none; width: 100%; } .pd-sidebar { flex: none; width: 100%; border-left: none; border-top: 1px solid #eee; } .pd-gallery-item { padding: 30px; } .pd-sticky-wrap { padding: 40px 20px 80px 20px; } }
-        @media (max-width: 640px) { .pd-visual { height: 55vh; } .pd-top h1 { font-size: 28px; } .pd-add-btn { padding: 20px; } .modal-content { padding: 30px 20px; } }
+        .skeleton-shimmer {
+          background: #f6f7f8;
+          background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+          background-repeat: no-repeat;
+          background-size: 800px 100%;
+          animation: shimmer 1.5s infinite linear;
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -468px 0; }
+          100% { background-position: 468px 0; }
+        }
+
+        /* RESPONSIVE OVERRIDES */
+        @media (max-width: 1024px) {
+          .pd-root { flex-direction: column; padding-top: 80px; }
+          .pd-visual { 
+            position: relative; 
+            top: 0; 
+            height: 65vh; /* Enough height to show product but keep sidebar visible below */
+            flex: none;
+            width: 100%;
+          }
+          .pd-sidebar { 
+            flex: none; 
+            width: 100%; 
+            border-left: none; 
+            border-top: 1px solid #eee; 
+          }
+          .pd-gallery-item { padding: 30px; }
+          .pd-sticky-wrap { padding: 40px 20px 80px 20px; }
+        }
+
+        @media (max-width: 640px) {
+          .pd-visual { height: 55vh; }
+          .pd-top h1 { font-size: 28px; }
+          .pd-add-btn { padding: 20px; }
+        }
       `}</style>
 
       {/* CHECKOUT MODAL */}
@@ -351,21 +363,14 @@ export default function ProductPage() {
                 <button 
                   disabled={isRedirecting}
                   style={{
-                    width: '100%', 
-                    background: '#fff', 
-                    color: '#000', 
-                    border: '1px solid #000', 
-                    padding: '24px', 
-                    fontWeight: 900, 
-                    fontSize: '11px', 
-                    letterSpacing: '3px', 
-                    cursor: 'pointer', 
-                    textTransform: 'uppercase',
-                    opacity: isRedirecting ? 0.5 : 1
+                    width: '100%', background: '#fff', color: '#000', border: '1px solid #000', padding: '24px', fontWeight: 900, fontSize: '11px', letterSpacing: '3px', cursor: 'pointer', textTransform: 'uppercase'
                   }}
-                  onClick={handleBuyNowClick}
+                  onClick={() => {
+                    addToBag({ ...product, media: product.image_url, selectedSize });
+                    router.push('/checkout');
+                  }}
                 >
-                  {isRedirecting ? "Обробка..." : "КУПИТИ ЗАРАЗ"}
+                  BUY IT NOW
                 </button>
               </div>
 
