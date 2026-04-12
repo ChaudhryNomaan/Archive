@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
 
-const ARCHIVE_CATEGORIES = ["MEN-SHOES", "WOMEN-SHOES", "SHIRTS", "SHORTS"];
+// SYNCED WITH FRONT-END CATEGORIES
+const ARCHIVE_CATEGORIES = ["SHOES", "SHIRTS", "SHORTS", "PANTS"];
 
 const PRESET_SIZES = [
   "32", "34", "36", "38", "40", "42", "44", "46", 

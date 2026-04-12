@@ -6,15 +6,15 @@ import { createClient } from '@/lib/supabase';
 
 // SYNC: Exact labels and params from your Nav.tsx
 const NAV_SECTORS = [
-  { label: "ЧОЛОВІЧЕ ВЗУТТЯ", param: "men-shoes" },
-  { label: "ЖІНОЧЕ ВЗУТТЯ", param: "women-shoes" },
+  { label: "ВЗУТТЯ", param: "shoes" },
   { label: "СОРОЧКИ", param: "shirts" },
-  { label: "ШОРТИ", param: "shorts" }
+  { label: "ШОРТИ ТА ШТАНИ", param: "shorts" }
 ];
 
 export default function MobileOverlay() {
   const supabase = createClient();
   const { isMenuOpen, setIsMenuOpen } = useOSNOVA();
+  const [mounted, setMounted] = useState(false);
   
   const [menuSettings, setMenuSettings] = useState({
     menuLabel: 'МЕНЮ',
@@ -24,7 +24,14 @@ export default function MobileOverlay() {
     twitter: '#'
   });
 
+  // Handle mounting to prevent hydration errors
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const fetchMenuSettings = async () => {
       try {
         const { data, error } = await supabase
@@ -55,10 +62,14 @@ export default function MobileOverlay() {
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [isMenuOpen, supabase]);
 
-  if (!isMenuOpen) return null;
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen, supabase, mounted]);
+
+  // If not mounted or not open, don't render anything to avoid child-node mismatch
+  if (!mounted || !isMenuOpen) return null;
 
   return (
     <div className="menu-overlay">
@@ -69,7 +80,10 @@ export default function MobileOverlay() {
           <video 
             key={menuSettings.menuVideo} 
             src={menuSettings.menuVideo} 
-            autoPlay loop muted playsInline 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
             className="object-cover"
           />
         )}
@@ -83,7 +97,6 @@ export default function MobileOverlay() {
             ГОЛОВНА
           </Link>
           
-          {/* UPDATED LINK GENERATION TO MATCH NAV.TSX */}
           {NAV_SECTORS.map((sector, i) => (
             <Link 
               key={sector.param} 

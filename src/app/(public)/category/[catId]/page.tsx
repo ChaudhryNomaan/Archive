@@ -6,15 +6,21 @@ import { createClient } from '@/lib/supabase';
 
 const supabase = createClient();
 
-// Мапінг категорій для бази даних залишається незмінним, щоб не зламати логіку запитів
+// Updated mapping for 3 main categories: SHOES, SHIRTS, and SHORTS/PANTS
 const SUB_CATEGORY_MAP: Record<string, string> = {
-  "JEANS": "JEAN",
-  "PANTS": "JEAN",
-  "TSHIRTS": "T%SHIRT",
-  "SHIRTS": "SHIRT",
+  // SHOES
+  "SHOES": "SHOE",
   "MEN-SHOES": "SHOE",
   "WOMEN-SHOES": "SHOE",
-  "SHORTS": "SHORT"
+
+  // SHIRTS
+  "SHIRTS": "SHIRT",
+  "TSHIRTS": "T%SHIRT",
+
+  // SHORTS & PANTS
+  "SHORTS": "SHORT",
+  "PANTS": "PANT",
+  "JEANS": "JEAN"
 };
 
 export default function CategoryPage({ params }: { params: Promise<{ catId: string }> }) {

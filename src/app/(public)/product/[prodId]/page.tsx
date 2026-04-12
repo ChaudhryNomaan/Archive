@@ -17,7 +17,6 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // --- RESTORED STATES ---
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '', address: '' });
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -49,7 +48,7 @@ export default function ProductPage() {
           setProduct(null);
         }
       } catch (error: any) {
-        console.error("Помилка завантаження Supabase:", error.message || error);
+        console.error("Supabase Error:", error.message || error);
         setProduct(null);
       } finally {
         setLoading(false);
@@ -59,7 +58,6 @@ export default function ProductPage() {
     fetchProduct();
   }, [prodId]);
 
-  // --- RESTORED HANDLER ---
   const handleFinalOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsRedirecting(true);
@@ -149,10 +147,10 @@ export default function ProductPage() {
         }
         
         .pd-visual { 
-          flex: 1.2; 
+          flex: 1.4; /* Increased ratio for the visual part */
           position: sticky; 
           top: 100px;
-          background: #f9f9f9; 
+          background: #fff; 
           display: flex;
           align-items: center;
           justify-content: center;
@@ -164,12 +162,12 @@ export default function ProductPage() {
           position: relative;
           width: 100%;
           height: 100%;
-          display: grid;
-          place-items: center;
         }
 
         .pd-gallery-item { 
-          grid-area: 1 / 1;
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           display: flex; 
@@ -177,8 +175,8 @@ export default function ProductPage() {
           justify-content: center;
           opacity: 0;
           visibility: hidden;
-          transition: opacity 0.6s ease;
-          padding: 60px;
+          transition: opacity 0.6s ease-in-out;
+          padding: 40px; /* Buffer to prevent edges touching screen */
         }
 
         .pd-gallery-item.active {
@@ -187,10 +185,14 @@ export default function ProductPage() {
           z-index: 2;
         }
 
-        .pd-gallery-item img, .pd-gallery-item video {
+        /* FULL VISIBILITY FIX */
+        .pd-gallery-item img, 
+        .pd-gallery-item video {
           max-width: 100%;
           max-height: 100%;
-          object-fit: contain;
+          width: auto;
+          height: auto;
+          object-fit: contain; /* Ensures full image is visible, never cropped */
         }
         
         .gallery-controls {
@@ -213,15 +215,20 @@ export default function ProductPage() {
         }
 
         .control-dot.active { opacity: 1; }
-        .pd-sidebar { flex: 0 0 500px; background: #fff; border-left: 1px solid #eee; }
+
+        .pd-sidebar { flex: 0 0 450px; background: #fff; border-left: 1px solid #eee; }
         .pd-sticky-wrap { padding: 60px 50px; display: flex; flex-direction: column; gap: 40px; }
+        
         .pd-back-link { background: none; border: none; font-weight: 900; font-size: 10px; letter-spacing: 2px; opacity: 0.4; transition: 0.3s; cursor: pointer; text-transform: uppercase; }
         .pd-back-link:hover { opacity: 1; transform: translateX(-5px); }
+        
         .pd-top h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 900; letter-spacing: -2px; line-height: 1.1; text-transform: uppercase; margin: 15px 0; }
         .pd-sku { font-size: 10px; color: #aaa; font-weight: 800; letter-spacing: 1.5px; }
         .pd-price { font-size: 20px; font-weight: 500; }
+        
         .pd-add-btn { width: 100%; background: #000; color: #fff; border: 1px solid #000; padding: 24px; font-weight: 900; font-size: 11px; letter-spacing: 3px; cursor: pointer; transition: 0.4s; text-transform: uppercase; }
         .pd-add-btn:hover { background: #333; }
+
         .size-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 1px; background: #eee; border: 1px solid #eee; }
         .size-btn { background: #fff; border: none; padding: 15px; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.3s; }
         .size-btn.active { background: #000; color: #fff; }
@@ -244,7 +251,6 @@ export default function ProductPage() {
           100% { background-position: 468px 0; }
         }
 
-        /* RESPONSIVE OVERRIDES */
         @media (max-width: 1024px) {
           .pd-root { flex-direction: column; padding-top: 80px; }
           .pd-visual { 
@@ -254,18 +260,18 @@ export default function ProductPage() {
             flex: none;
             width: 100%;
           }
+          .pd-gallery-item { padding: 20px; }
           .pd-sidebar { 
             flex: none; 
             width: 100%; 
             border-left: none; 
             border-top: 1px solid #eee; 
           }
-          .pd-gallery-item { padding: 30px; }
           .pd-sticky-wrap { padding: 40px 20px 80px 20px; }
         }
 
         @media (max-width: 640px) {
-          .pd-visual { height: 55vh; }
+          .pd-visual { height: 50vh; }
           .pd-top h1 { font-size: 28px; }
           .pd-add-btn { padding: 20px; }
         }
@@ -322,7 +328,7 @@ export default function ProductPage() {
         </div>
       )}
 
-      {/* ВІЗУАЛЬНА СЕКЦІЯ */}
+      {/* VISUAL SECTION */}
       <div 
         className="pd-visual" 
         onClick={() => { if (!touchEnd.current) nextImage(); }}
@@ -343,7 +349,7 @@ export default function ProductPage() {
                   {isVideo(url) ? (
                     <video src={url} autoPlay muted loop playsInline />
                   ) : (
-                    <img src={url} alt={`${product.name}`} />
+                    <img src={url} alt={product.name} />
                   )}
                 </div>
               ))}
@@ -369,7 +375,7 @@ export default function ProductPage() {
         )}
       </div>
 
-      {/* СЕКЦІЯ САЙДБАРУ */}
+      {/* SIDEBAR SECTION */}
       <div className="pd-sidebar">
         <div className="pd-sticky-wrap">
           <button className="pd-back-link" onClick={() => router.back()}>← НАЗАД ДО АРХІВУ</button>
@@ -417,9 +423,7 @@ export default function ProductPage() {
                   style={{
                     width: '100%', background: '#fff', color: '#000', border: '1px solid #000', padding: '24px', fontWeight: 900, fontSize: '11px', letterSpacing: '3px', cursor: 'pointer', textTransform: 'uppercase'
                   }}
-                  onClick={() => {
-                    setShowCheckoutModal(true);
-                  }}
+                  onClick={() => setShowCheckoutModal(true)}
                 >
                   BUY IT NOW
                 </button>
