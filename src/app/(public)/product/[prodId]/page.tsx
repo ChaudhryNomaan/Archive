@@ -63,6 +63,31 @@ export default function ProductPage() {
     setIsRedirecting(true);
 
     try {
+      // 1. SAVE TO DATABASE (Ensures dashboard sees the sale)
+      const { error: dbError } = await supabase
+        .from('orders')
+        .insert([{
+          customer_name: userInfo.name,
+          customer_email: userInfo.email,
+          customer_phone: userInfo.phone,
+          customer_address: userInfo.address,
+          total_amount: product.price,
+          status: 'pending',
+          items: [{
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            selectedSize: selectedSize,
+            quantity: 1
+          }]
+        }]);
+
+      if (dbError) {
+        console.error("Supabase Insert Error Details:", dbError);
+        throw dbError;
+      }
+
+      // 2. GET NOTIFICATION SETTINGS
       const { data: settings } = await supabase
         .from('admin_settings')
         .select('*')
@@ -72,6 +97,7 @@ export default function ProductPage() {
       const activeMethod = settings?.active_notification_method || 'whatsapp';
       const recipient = settings?.notification_recipient || '';
 
+      // 3. CONSTRUCT MESSAGE
       const messageText = 
         `НОВЕ ЗАМОВЛЕННЯ // OSNOVA\n\n` +
         `Клієнт: ${userInfo.name}\n` +
@@ -85,6 +111,7 @@ export default function ProductPage() {
 
       const encodedMessage = encodeURIComponent(messageText);
 
+      // 4. REDIRECT TO CHAT
       if (activeMethod === 'whatsapp') {
         window.open(`https://wa.me/${recipient.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
       } else {
@@ -92,8 +119,14 @@ export default function ProductPage() {
       }
 
       setShowCheckoutModal(false);
-    } catch (error) {
-      console.error("Order error:", error);
+    } catch (error: any) {
+      console.error("Order process failed:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      alert(`Error processing order: ${error.message || "Please check your database connection."}`);
     } finally {
       setIsRedirecting(false);
     }
@@ -147,7 +180,7 @@ export default function ProductPage() {
         }
         
         .pd-visual { 
-          flex: 1.4; /* Increased ratio for the visual part */
+          flex: 1.4; 
           position: sticky; 
           top: 100px;
           background: #fff; 
@@ -176,7 +209,7 @@ export default function ProductPage() {
           opacity: 0;
           visibility: hidden;
           transition: opacity 0.6s ease-in-out;
-          padding: 40px; /* Buffer to prevent edges touching screen */
+          padding: 40px; 
         }
 
         .pd-gallery-item.active {
@@ -185,14 +218,13 @@ export default function ProductPage() {
           z-index: 2;
         }
 
-        /* FULL VISIBILITY FIX */
         .pd-gallery-item img, 
         .pd-gallery-item video {
           max-width: 100%;
           max-height: 100%;
           width: auto;
           height: auto;
-          object-fit: contain; /* Ensures full image is visible, never cropped */
+          object-fit: contain; 
         }
         
         .gallery-controls {
@@ -236,7 +268,21 @@ export default function ProductPage() {
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 40px; width: 90%; max-width: 500px; position: relative; }
         .close-modal { position: absolute; top: 20px; right: 20px; background: none; border: none; font-weight: 900; cursor: pointer; }
-        .checkout-input { width: 100%; border: none; border-bottom: 1px solid #000; padding: 15px 0; margin-bottom: 20px; outline: none; font-family: inherit; font-weight: 700; text-transform: uppercase; font-size: 12px; }
+        
+        .checkout-input { 
+          width: 100%; 
+          border: none; 
+          border-bottom: 1px solid #000; 
+          padding: 15px 0; 
+          margin-bottom: 20px; 
+          outline: none; 
+          font-family: inherit; 
+          font-weight: 700; 
+          text-transform: uppercase; 
+          font-size: 12px;
+          color: #000; /* Ensured text is black */
+          background: transparent;
+        }
 
         .skeleton-shimmer {
           background: #f6f7f8;
