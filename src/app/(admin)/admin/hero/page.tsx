@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase'; // Using your existing client
+import { createClient } from '@/lib/supabase';
 
 export default function HeroAdmin() {
   const supabase = createClient();
@@ -10,7 +10,6 @@ export default function HeroAdmin() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    // Load current Hero & Marquee settings from Supabase
     const loadConfig = async () => {
       const { data, error } = await supabase
         .from('site_config')
@@ -19,13 +18,11 @@ export default function HeroAdmin() {
         .single();
 
       if (data && !error) {
-        // Ensure structure exists to prevent input errors
         const content = data.content;
         if (!content.hero) content.hero = { videoSrc: "", subtitle: "", title: "" };
         if (!content.marquee) content.marquee = { text: "" };
         setConfig(content);
       } else {
-        // Default state if table is empty
         setConfig({
           hero: { videoSrc: "", subtitle: "", title: "" },
           marquee: { text: "" }
@@ -47,14 +44,12 @@ export default function HeroAdmin() {
     const filePath = `hero/${fileName}`;
 
     try {
-      // Upload to your "vault" bucket
-      const { data, error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('vault')
         .upload(filePath, file);
 
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
-      // Get the Public URL
       const { data: { publicUrl } } = supabase.storage
         .from('vault')
         .getPublicUrl(filePath);
@@ -73,7 +68,6 @@ export default function HeroAdmin() {
     e.preventDefault();
     setStatus("SYNCING_TO_SUPABASE...");
     
-    // Upsert the entire config object into the 'hero' row
     const { error } = await supabase
       .from('site_config')
       .upsert({ 
@@ -90,23 +84,23 @@ export default function HeroAdmin() {
     }
   };
 
-  if (!config) return <div className="p-20 text-[10px] tracking-[5px] animate-pulse">INITIALIZING_HERO_ENGINE...</div>;
+  if (!config) return <div className="p-10 md:p-20 text-[10px] tracking-[5px] animate-pulse">INITIALIZING_HERO_ENGINE...</div>;
 
   return (
-    <div className="p-10">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '40px' }}>
-        <div style={{ width: '18px', height: '18px', border: '2px solid #d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '6px', height: '6px', background: '#d4af37' }}></div>
+    <div className="admin-root">
+      <div className="admin-header">
+        <div className="status-box">
+          <div className="status-dot"></div>
         </div>
-        <h2 style={{ fontSize: '12px', letterSpacing: '3px', fontWeight: '900', margin: 0 }}>HERO_COMMAND_CENTER</h2>
+        <h2 className="admin-title">HERO_COMMAND_CENTER</h2>
       </div>
 
       <form onSubmit={handleSave}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '40px' }}>
+        <div className="form-grid">
           
           {/* Video Section */}
-          <div>
-            <label style={{ fontSize: '10px', color: '#555', letterSpacing: '2px' }}>VIDEO SOURCE (URL)</label>
+          <div className="form-group">
+            <label className="input-label">VIDEO SOURCE (URL)</label>
             <input 
               type="text"
               className="admin-input"
@@ -122,8 +116,8 @@ export default function HeroAdmin() {
           </div>
 
           {/* Subtitle Section */}
-          <div>
-            <label style={{ fontSize: '10px', color: '#555', letterSpacing: '2px' }}>HERO SUBTITLE</label>
+          <div className="form-group">
+            <label className="input-label">HERO SUBTITLE</label>
             <input 
               type="text" 
               className="admin-input"
@@ -133,19 +127,18 @@ export default function HeroAdmin() {
           </div>
 
           {/* Headline Section */}
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: '10px', color: '#555', letterSpacing: '2px' }}>MAIN HEADLINE</label>
+          <div className="form-group span-2">
+            <label className="input-label">MAIN HEADLINE</label>
             <textarea 
-              className="admin-input" 
-              style={{ height: '80px', paddingTop: '15px' }}
+              className="admin-input textarea" 
               value={config.hero.title || ""}
               onChange={e => setConfig({...config, hero: {...config.hero, title: e.target.value}})}
             />
           </div>
 
           {/* MARQUEE SECTION */}
-          <div style={{ gridColumn: 'span 2', borderTop: '1px solid #111', paddingTop: '40px' }}>
-            <label style={{ fontSize: '10px', color: '#d4af37', letterSpacing: '2px', fontWeight: 'bold' }}>MARQUEE TRACK TEXT</label>
+          <div className="form-group span-2 marquee-divider">
+            <label className="input-label highlight">MARQUEE TRACK TEXT</label>
             <input 
               type="text" 
               className="admin-input"
@@ -164,19 +157,46 @@ export default function HeroAdmin() {
         </button>
         
         {status && (
-          <p style={{ color: '#d4af37', fontSize: '10px', marginTop: '20px', letterSpacing: '2px' }}>
+          <p className="status-message">
             {status}
           </p>
         )}
       </form>
 
       <style jsx>{`
-        .admin-input { width: 100%; background: #A39F9F; border: 1px solid #111; padding: 20px; color: #fff; font-size: 13px; margin-top: 10px; outline: none; }
+        .admin-root { padding: clamp(20px, 5vw, 60px); max-width: 1200px; margin: 0 auto; }
+        .admin-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
+        .status-box { width: 18px; height: 18px; border: 2px solid #d4af37; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .status-dot { width: 6px; height: 6px; background: #d4af37; }
+        .admin-title { font-size: clamp(10px, 2vw, 12px); letter-spacing: 3px; font-weight: 900; margin: 0; white-space: nowrap; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(20px, 4vw, 40px); margin-bottom: 40px; }
+        .span-2 { grid-column: span 2; }
+        
+        .input-label { font-size: 9px; color: #555; letter-spacing: 2px; text-transform: uppercase; display: block; }
+        .input-label.highlight { color: #d4af37; font-weight: bold; }
+        
+        .admin-input { width: 100%; background: #A39F9F; border: 1px solid #111; padding: clamp(15px, 3vw, 20px); color: #fff; font-size: 13px; margin-top: 10px; outline: none; border-radius: 0; box-sizing: border-box; }
         .admin-input:focus { border-color: #d4af37; }
-        .upload-btn { display: inline-block; padding: 10px 20px; border: 1px solid #333; color: #888; font-size: 9px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; }
+        .admin-input.textarea { height: 120px; padding-top: 15px; resize: vertical; }
+        
+        .upload-btn { display: inline-block; padding: 10px 20px; border: 1px solid #333; color: #888; font-size: 8px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; text-align: center; width: 100%; box-sizing: border-box; }
         .upload-btn:hover { border-color: #d4af37; color: #fff; }
-        .save-btn { background: #d4af37; color: #000; border: none; padding: 15px 40px; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; }
+        
+        .marquee-divider { border-top: 1px solid #111; padding-top: 40px; }
+        
+        .save-btn { background: #d4af37; color: #000; border: none; padding: 18px 40px; font-size: 10px; font-weight: 900; letter-spacing: 2px; cursor: pointer; width: 100%; max-width: 300px; transition: opacity 0.3s; }
         .save-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .status-message { color: #d4af37; font-size: 9px; margin-top: 20px; letter-spacing: 2px; line-height: 1.5; }
+
+        @media (max-width: 768px) {
+          .form-grid { grid-template-columns: 1fr; gap: 25px; }
+          .span-2 { grid-column: span 1; }
+          .save-btn { max-width: 100%; }
+          .admin-header { margin-bottom: 30px; }
+          .marquee-divider { padding-top: 30px; }
+        }
       `}</style>
     </div>
   );

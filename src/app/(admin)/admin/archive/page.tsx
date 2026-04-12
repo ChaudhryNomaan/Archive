@@ -208,7 +208,7 @@ export default function ArchiveAdmin() {
         <div className="accent-line"></div>
         <div className="header-meta">
           <span>ENGINE_V3.0 // GLOBAL_VAULT</span>
-          <span>UNIFIED_INVENTORY_SYSTEM</span>
+          <span className="hide-mobile">UNIFIED_INVENTORY_SYSTEM</span>
         </div>
         <h1 className="luxury-title">ARCHIVE <span className="serif-italic">& Vault</span></h1>
       </header>
@@ -250,7 +250,7 @@ export default function ArchiveAdmin() {
               </div>
             </div>
 
-            <div className="luxury-row">
+            <div className="luxury-row full-width-mobile">
               <LuxurySelect 
                 label="SECTOR" 
                 value={formValues.subCategory} 
@@ -292,10 +292,10 @@ export default function ArchiveAdmin() {
           </div>
 
           <div className="table-header-luxury">
-            <span>SKU</span>
-            <span>IDENTIFIER</span>
-            <span>PRICING</span>
-            <span>CTRL</span>
+            <span className="col-sku">SKU</span>
+            <span className="col-name">IDENTIFIER</span>
+            <span className="col-price">PRICING</span>
+            <span className="col-actions">CTRL</span>
           </div>
 
           <div className="inventory-scroll">
@@ -330,32 +330,57 @@ export default function ArchiveAdmin() {
         .luxury-header { margin-bottom: 40px; }
         .accent-line { width: 30px; height: 1px; background: #d4af37; margin-bottom: 15px; }
         .header-meta { display: flex; justify-content: space-between; font-size: 8px; color: #444; letter-spacing: 2px; }
-        .luxury-title { font-size: 4rem; font-weight: 200; margin: 0; text-transform: uppercase; }
+        .luxury-title { font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 200; margin: 0; text-transform: uppercase; line-height: 1.1; }
         .serif-italic { font-family: serif; font-style: italic; color: #444; }
-        .admin-split-layout { display: grid; grid-template-columns: 350px 1fr; gap: 50px; }
+        
+        .admin-split-layout { display: grid; grid-template-columns: 350px 1fr; gap: 50px; align-items: start; }
+        
         .luxury-form-container { background: #111; padding: 25px; border: 1px solid #222; position: sticky; top: 20px; }
         .card-subtitle { font-size: 9px; color: #d4af37; letter-spacing: 3px; margin-bottom: 25px; }
         .luxury-stack { display: flex; flex-direction: column; gap: 20px; }
         .luxury-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
         .input-group label { display: block; font-size: 8px; color: #444; margin-bottom: 8px; letter-spacing: 1px; }
-        .luxury-input { background: none; border: none; border-bottom: 1px solid #222; color: #fff; width: 100%; padding: 8px 0; outline: none; font-size: 12px; }
+        .luxury-input { background: none; border: none; border-bottom: 1px solid #222; color: #fff; width: 100%; padding: 8px 0; outline: none; font-size: 12px; border-radius: 0; }
+        
         .size-grid { display: flex; gap: 4px; flex-wrap: wrap; }
         .luxury-size-btn { background: none; border: 1px solid #222; color: #444; padding: 5px 8px; font-size: 9px; cursor: pointer; transition: 0.2s; }
         .luxury-size-btn.active { border-color: #d4af37; color: #fff; background: #1a1a1a; }
+        
         .luxury-submit-btn { background: #fff; color: #000; border: none; padding: 15px; font-weight: 900; cursor: pointer; margin-top: 10px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
-        .luxury-search-input { background: #050505; border: 1px solid #111; padding: 12px; color: #fff; width: 100%; margin-bottom: 20px; font-size: 10px; }
-        .table-header-luxury, .inventory-row-luxury { display: grid; grid-template-columns: 140px 1fr 100px 60px; padding: 15px 0; border-bottom: 1px solid #111; font-size: 9px; }
+        .luxury-search-input { background: #050505; border: 1px solid #111; padding: 12px; color: #fff; width: 100%; margin-bottom: 20px; font-size: 10px; border-radius: 0; }
+        
+        .table-header-luxury, .inventory-row-luxury { display: grid; grid-template-columns: 100px 1fr 80px 50px; padding: 15px 0; border-bottom: 1px solid #111; font-size: 9px; gap: 10px; align-items: center; }
         .table-header-luxury { color: #444; text-transform: uppercase; letter-spacing: 1px; }
         .inventory-row-luxury { cursor: pointer; transition: background 0.2s; }
         .inventory-row-luxury:hover { background: #050505; }
-        .col-sku { color: #d4af37; font-family: monospace; }
+        
+        .col-sku { color: #d4af37; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .col-name { overflow: hidden; text-overflow: ellipsis; }
         .row-sub-info { color: #444; margin-top: 4px; font-size: 7px; text-transform: uppercase; }
         .delete-btn { background: none; border: 1px solid #333; color: #444; font-size: 7px; padding: 4px; cursor: pointer; }
         .delete-btn:hover { border-color: #ff4d4d; color: #ff4d4d; }
+        
         .upload-block { border: 1px dashed #222; padding: 20px; text-align: center; color: #444; font-size: 9px; cursor: pointer; }
-        .preview-strip { display: flex; gap: 5px; margin-top: 10px; overflow-x: auto; }
-        .mini-preview { width: 40px; height: 40px; object-fit: cover; border: 1px solid #222; }
+        .preview-strip { display: flex; gap: 5px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .mini-preview { width: 40px; height: 40px; flex-shrink: 0; object-fit: cover; border: 1px solid #222; }
         .cancel-btn { background: none; border: none; color: #444; font-size: 8px; cursor: pointer; text-decoration: underline; margin-top: 5px; }
+
+        @media (max-width: 1024px) {
+          .admin-split-layout { grid-template-columns: 1fr; gap: 40px; }
+          .luxury-form-container { position: relative; top: 0; }
+          .table-header-luxury, .inventory-row-luxury { grid-template-columns: 80px 1fr 70px 40px; }
+        }
+
+        @media (max-width: 640px) {
+          .luxury-archive { padding: 20px; }
+          .hide-mobile { display: none; }
+          .luxury-row { grid-template-columns: 1fr; }
+          .table-header-luxury { display: none; }
+          .inventory-row-luxury { grid-template-columns: 1fr 70px 40px; }
+          .col-sku { display: none; }
+          .inventory-row-luxury { padding: 20px 0; }
+        }
       `}</style>
     </div>
   );

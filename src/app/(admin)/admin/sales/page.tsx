@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, BarChart, Bar, Cell 
+  Tooltip, ResponsiveContainer 
 } from 'recharts';
 
 export default function SalesAnalyticsDashboard() {
@@ -53,27 +53,37 @@ export default function SalesAnalyticsDashboard() {
   );
 
   return (
-    <div style={{ background: '#464242', minHeight: '100vh', color: '#fff', padding: '40px', fontFamily: 'sans-serif' }}>
-      
+    <div className="dashboard-container" style={{ background: '#464242', minHeight: '100vh', color: '#fff', padding: ' clamp(20px, 5vw, 40px)', fontFamily: 'sans-serif' }}>
+      <style>{`
+        .header-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 60px; border-bottom: 1px solid #1a1a1a; padding-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        .title-text { fontSize: clamp(40px, 8vw, 72px); font-family: serif; font-style: italic; margin: 0; letter-spacing: -3px; line-height: 1; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr)); gap: 30px; margin-bottom: 40px; }
+        .mobile-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
+        @media (max-width: 768px) {
+          .header-flex { align-items: flex-start; flex-direction: column; }
+          .time-filter-wrap { width: 100%; display: flex; }
+          .time-filter-wrap button { flex: 1; }
+        }
+      `}</style>
+
       {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '60px', borderBottom: '1px solid #1a1a1a', paddingBottom: '40px' }}>
+      <div className="header-flex">
         <div>
-          <span style={{ fontSize: '10px', letterSpacing: '5px', color: '#444', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '5px', color: '#888', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
             AETHER Intelligence // System 2.0
           </span>
-          <h1 style={{ fontSize: '72px', fontFamily: 'serif', fontStyle: 'italic', margin: 0, letterSpacing: '-3px' }}>
-            Sales Analytics
-          </h1>
+          <h1 className="title-text">Sales Analytics</h1>
         </div>
 
         {/* TIME FILTER */}
-        <div style={{ display: 'flex', background: '#665E5E', border: '1px solid #1a1a1a', padding: '4px' }}>
+        <div className="time-filter-wrap" style={{ background: '#665E5E', border: '1px solid #1a1a1a', padding: '4px' }}>
           {['7d', '30d', 'all'].map((tf) => (
             <button
               key={tf}
               onClick={() => setTimeFrame(tf)}
               style={{
-                padding: '8px 24px',
+                padding: '12px 24px',
                 fontSize: '10px',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
@@ -91,11 +101,9 @@ export default function SalesAnalyticsDashboard() {
       </div>
 
       {/* CHARTS GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '30px', marginBottom: '40px' }}>
-        
-        {/* REVENUE BOX */}
-        <div style={{ background: '#1B0D0D', border: '1px solid #1a1a1a', padding: '40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
+      <div className="chart-grid">
+        <div style={{ background: '#1B0D0D', border: '1px solid #1a1a1a', padding: 'clamp(20px, 5vw, 40px)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', flexWrap: 'wrap', gap: '10px' }}>
             <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#444', letterSpacing: '2px' }}>GROSS SETTLEMENT (₴)</span>
             <span style={{ fontSize: '28px', fontFamily: 'serif', color: '#d4af37' }}>{stats.totalRevenue.toLocaleString()} ₴</span>
           </div>
@@ -115,13 +123,13 @@ export default function SalesAnalyticsDashboard() {
 
       {/* TRANSACTION TABLE */}
       <div style={{ background: '#0a0a0a', border: '1px solid #1a1a1a' }}>
-        <div style={{ padding: '25px 40px', borderBottom: '1px solid #1a1a1a', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ padding: '25px clamp(20px, 5vw, 40px)', borderBottom: '1px solid #1a1a1a', display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '4px', textTransform: 'uppercase' }}>Transaction Manifest</span>
           <span style={{ fontSize: '10px', fontFamily: 'serif', fontStyle: 'italic', color: '#d4af37' }}>Logs: {stats.filtered.length}</span>
         </div>
         
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="mobile-scroll">
+          <table className="data-table">
             <thead>
               <tr style={{ borderBottom: '1px solid #1a1a1a', color: '#444', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '3px' }}>
                 <th style={{ padding: '25px 40px' }}>Timestamp</th>
